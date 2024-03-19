@@ -38,3 +38,4 @@ build/
 /maven-wrapper
 /mvnw
 /mvnw.cmd
+/*.pdf

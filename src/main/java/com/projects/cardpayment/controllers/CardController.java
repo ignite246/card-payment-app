@@ -260,9 +260,8 @@ public class CardController {
 
 			String uuid = String.valueOf(UUID.randomUUID());
 			String pdfName = uuid + "_receipt.pdf";
-			String folder = ".\\moneytransfer\\";
 
-			PdfWriter.getInstance(document, new FileOutputStream(folder + pdfName));
+			PdfWriter.getInstance(document, new FileOutputStream(pdfName));
 			document.open();
 
 			Font font = FontFactory.getFont(FontFactory.COURIER, 20, BaseColor.BLACK);

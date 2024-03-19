@@ -1,5 +1,8 @@
 package com.projects.cardpayment.controllers;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -206,12 +209,14 @@ public class CardController {
 			Map<String, String> orderPaymentFailureResponse = new HashMap<>();
 			orderPaymentFailureResponse.put("status", "FAILURE");
 			orderPaymentFailureResponse.put("reason", "Invalid amount value");
+			orderPaymentFailureResponse.put("key1", "value1");
 			return orderPaymentFailureResponse;
 		}
 	}
 
 	@PostMapping("/money-transfer")
-	public Map<String, String> moneyTransfer(Integer senderCardId, Integer receiverCardId, Integer amount) {
+	public Map<String, String> moneyTransfer(@RequestParam("senderCardId") Integer senderCardId,
+			@RequestParam("receiverCardId") Integer receiverCardId, @RequestParam("amount") Integer amount) {
 
 		logger.info("===== moneyTransfer :: Input Received ====");
 		logger.info("Sender CardID :: " + senderCardId);
@@ -260,6 +265,34 @@ public class CardController {
 			moneyTransferFailureResponse.put("reason", "Invalid amount value");
 			return moneyTransferFailureResponse;
 		}
+
+	}
+
+	@GetMapping("/getListOfExpiredCard")
+	public List<Card> getListOfExpiredCards() {
+
+		List<Card> listOfExpiredCard = new ArrayList<Card>();
+		List<Card> cards = cardRepository.findAll();
+		for (int i = 0; i < cards.size(); i++) {
+			Card card = cards.get(i);
+
+			String cardExpiryDate = card.getCardExpiryDate();
+
+			DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+			// Parse the string into a LocalDate object
+			LocalDate cardDate = LocalDate.parse(cardExpiryDate, formatter);
+
+			// Compare with another date
+			LocalDate currentDate = LocalDate.now();
+
+			if (cardDate.isBefore(currentDate)) {
+				logger.info("Card is expired" + card);
+				listOfExpiredCard.add(card);
+			}
+		}
+
+		return listOfExpiredCard;
 
 	}
 

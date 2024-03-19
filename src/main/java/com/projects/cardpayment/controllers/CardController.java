@@ -1,11 +1,14 @@
 package com.projects.cardpayment.controllers;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +23,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.itextpdf.text.BaseColor;
+import com.itextpdf.text.Document;
+import com.itextpdf.text.DocumentException;
+import com.itextpdf.text.Element;
+import com.itextpdf.text.Font;
+import com.itextpdf.text.FontFactory;
+import com.itextpdf.text.PageSize;
+import com.itextpdf.text.Paragraph;
+import com.itextpdf.text.pdf.PdfWriter;
 import com.projects.cardpayment.daos.CardRepository;
 import com.projects.cardpayment.entities.Card;
 
@@ -216,7 +228,8 @@ public class CardController {
 
 	@PostMapping("/money-transfer")
 	public Map<String, String> moneyTransfer(@RequestParam("senderCardId") Integer senderCardId,
-			@RequestParam("receiverCardId") Integer receiverCardId, @RequestParam("amount") Integer amount) {
+			@RequestParam("receiverCardId") Integer receiverCardId, @RequestParam("amount") Integer amount)
+			throws DocumentException, FileNotFoundException {
 
 		logger.info("===== moneyTransfer :: Input Received ====");
 		logger.info("Sender CardID :: " + senderCardId);
@@ -232,7 +245,7 @@ public class CardController {
 			Integer senderUpdatedCardBalance = senderCardBalance - amount;
 			senderCard.setCardBalance(senderUpdatedCardBalance);
 			cardRepository.save(senderCard);
-			logger.info(amount + " amount deducted from sender'd card successfully");
+			logger.info(amount + " amount deducted from sender's card successfully");
 
 			// Fetching receiver card details to credit amount in his card
 			Card receiverCard = cardRepository.findById(receiverCardId).get();
@@ -241,6 +254,32 @@ public class CardController {
 			receiverCard.setCardBalance(receiverUpdatedCardBalance);
 			cardRepository.save(receiverCard);
 			logger.info(amount + " amount credited to receiver's card successfully");
+
+			// Code to generate money transfer receipt pdf
+			Document document = new Document(PageSize.A4);
+
+			String uuid = String.valueOf(UUID.randomUUID());
+			String pdfName = uuid + "_receipt.pdf";
+			String folder = ".\\moneytransfer\\";
+
+			PdfWriter.getInstance(document, new FileOutputStream(folder + pdfName));
+			document.open();
+
+			Font font = FontFactory.getFont(FontFactory.COURIER, 20, BaseColor.BLACK);
+			Paragraph para = new Paragraph("Money-Transfer Receipt", font);
+			para.setAlignment(Element.ALIGN_CENTER);
+			document.add(para);
+
+			Paragraph para2 = new Paragraph("Sender Card ID :: " + senderCardId, font);
+			document.add(para2);
+
+			Paragraph para3 = new Paragraph("Receiver Card ID :: " + receiverCardId, font);
+			document.add(para3);
+
+			Paragraph para4 = new Paragraph("Transaction Amount :: " + amount, font);
+			document.add(para4);
+
+			document.close();
 
 			// Preparing response in case of success
 			Map<String, String> moneyTransferSuccessResponse = new HashMap<>(5);

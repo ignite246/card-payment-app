@@ -30,6 +30,9 @@ import com.itextpdf.text.PageSize;
 import com.itextpdf.text.Paragraph;
 import com.itextpdf.text.pdf.PdfWriter;
 import com.projects.cardpayment.daos.CardRepository;
+import com.projects.cardpayment.dtos.CVVNumApiResponseDTO;
+import com.projects.cardpayment.dtos.CardsByBankResDTO;
+import com.projects.cardpayment.dtos.GetCardBalanceInBetweenResDTO;
 import com.projects.cardpayment.entities.Card;
 
 @RestController
@@ -347,5 +350,118 @@ public class CardController {
         return listOfExpiredCard;
 
     }
+    
+    
+    
+	@GetMapping("/getCVVNumberByCardId/{cardId}")
+	public CVVNumApiResponseDTO getCVVNumberByCardId(@PathVariable("cardId") Integer cardId) {
+		logger.info("input received in getCVVNumberByCardId :: "+cardId);
+
+		Integer cardCVVNo = 0;
+		CVVNumApiResponseDTO cvvNumApiResponseDTO = new CVVNumApiResponseDTO();
+
+		try {
+
+			Card card = cardRepository.findById(cardId).get();
+			cardCVVNo = card.getCardCVVNumber();
+
+			// Preparing success response
+			cvvNumApiResponseDTO.setCardCVVNum(cardCVVNo);
+			cvvNumApiResponseDTO.setStatusCode(200); // OK
+			cvvNumApiResponseDTO.setStatusMessage("Success");
+
+		} catch (Exception e) {
+			
+			logger.error("exception occurred while fetching CVV number :: Exception Message :: "+e.getMessage());
+			
+			cvvNumApiResponseDTO.setCardCVVNum(cardCVVNo);
+			cvvNumApiResponseDTO.setStatusCode(500); // Internal Server Code
+			cvvNumApiResponseDTO.setStatusMessage("Failure");
+
+			// Preparing failure response
+
+		}
+
+		logger.info("Response of the getCVVNumberByCardId API :: "+cvvNumApiResponseDTO);
+		return cvvNumApiResponseDTO;
+	}
+
+	@GetMapping("/getListOfCardThatHaveBalanceInBetween")
+	public GetCardBalanceInBetweenResDTO getListOfCardThatHaveBalanceInBetween(
+			@RequestParam("lowerAmount") Integer lowerAmount, @RequestParam("upperAmount") Integer upperAmount) {
+		GetCardBalanceInBetweenResDTO getCardBalanceInBetweenResDTO = null;
+		List<Card> listOfCardBalance = null;
+		List<Card> allCards = null;
+		Card card = null;
+		try {
+			if (lowerAmount > 0 && upperAmount > 0) {
+				listOfCardBalance = new ArrayList<Card>();
+				allCards = cardRepository.findAll();
+				for (int i = 0; i < allCards.size(); i++) {
+					card = allCards.get(i);
+					Integer cardBalance = card.getCardBalance();
+
+					if (cardBalance >= lowerAmount && cardBalance <= upperAmount) {
+
+						listOfCardBalance.add(card);
+					}
+				}
+			}
+			getCardBalanceInBetweenResDTO = new GetCardBalanceInBetweenResDTO();
+			if (listOfCardBalance == null || listOfCardBalance.size() == 0) {
+				getCardBalanceInBetweenResDTO.setStatus("Failure");
+				getCardBalanceInBetweenResDTO.setStatusCode("1");// frontend team will have mapping as No Card Found
+			} else {
+				getCardBalanceInBetweenResDTO.setStatus("Success");
+				getCardBalanceInBetweenResDTO.setStatusCode("0");
+				getCardBalanceInBetweenResDTO.setCardList(listOfCardBalance);
+
+			}
+		} catch (Exception e) {
+			// TODO: handle exception
+			System.out.println(e);
+		}
+		return getCardBalanceInBetweenResDTO;
+	}
+
+	@GetMapping("/getCardsByBankName/{bankName}")
+	public CardsByBankResDTO getCardsByBankName(@PathVariable String bankName) {
+		CardsByBankResDTO cardsByBankResDTO = null;
+		List<Card> allCards = null;
+		List<Card> listOfCards = null;
+		Card card = null;
+		String cardBankName = null;
+		try {
+
+			if (bankName != null && 2 <= bankName.length()) {
+				allCards = cardRepository.findAll();
+				listOfCards = new ArrayList<Card>();
+				for (int i = 0; i < allCards.size(); i++) {
+					card = allCards.get(i);
+					cardBankName = card.getCardBankName();
+					if (cardBankName.equalsIgnoreCase(bankName)) {
+						listOfCards.add(card);
+					}
+
+				}
+			}
+			cardsByBankResDTO = new CardsByBankResDTO();
+
+			if (listOfCards == null || listOfCards.size() == 0) {
+				cardsByBankResDTO.setStatus("Failure");
+				cardsByBankResDTO.setStatusCode("7000");// frontend team will have mapping as No Card Found
+			} else {
+				cardsByBankResDTO.setStatus("Success");
+				cardsByBankResDTO.setStatusCode("8000");
+				cardsByBankResDTO.setCardList(listOfCards);
+			}
+		} catch (Exception e) {
+			System.out.print(e);
+
+		}
+		return cardsByBankResDTO;
+	}
+    
+    
 
 }

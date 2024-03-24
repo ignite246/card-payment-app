@@ -324,7 +324,7 @@ public class CardController {
             logger.info(amount + " amount credited to receiver's card successfully");
 
             // Code to generate money transfer receipt pdf
-            Document document = new Document(PageSize.LETTER)
+            Document document = new Document(PageSize.LETTER);
 
             String uuid = String.valueOf(UUID.randomUUID());
             String pdfName = uuid + "_receipt.pdf";

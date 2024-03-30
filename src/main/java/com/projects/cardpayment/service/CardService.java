@@ -28,10 +28,10 @@ import com.itextpdf.text.PageSize;
 import com.itextpdf.text.Paragraph;
 import com.itextpdf.text.pdf.PdfWriter;
 import com.projects.cardpayment.controllers.CardController;
-import com.projects.cardpayment.daos.CardRepository;
-import com.projects.cardpayment.daos.TxnRepository;
 import com.projects.cardpayment.entities.Card;
 import com.projects.cardpayment.entities.TxnDetails;
+import com.projects.cardpayment.repository.CardRepository;
+import com.projects.cardpayment.repository.TxnRepository;
 
 @Service
 public class CardService {
@@ -90,6 +90,8 @@ public class CardService {
 			card.setCardBalance(cardNewBalance);
 			card = cardRepository.save(card);
 			logger.info("card {}", card);
+			 Date txnDate = new Date();
+			saveTransactionalDetails(null,null,card.getCardId(),card.getCardHolderFirstName(),amount,txnDate,"Amount Deposited");
 		} catch (Exception e) {
 			logger.info("CS : Exception  {}", e.getMessage());
 		}
@@ -107,7 +109,9 @@ public class CardService {
 		cardCurrentBalance = card.getCardBalance();
 		cardNewBalance = cardCurrentBalance - amount;
 		card.setCardBalance(cardNewBalance);
-
+		 Date txnDate = new Date();
+		saveTransactionalDetails(card.getCardId(),card.getCardHolderFirstName(),null,null,amount,txnDate,"withdraw Transaction");
+	
 		return cardRepository.save(card);
 
 	}
@@ -141,7 +145,12 @@ public class CardService {
 				orderPaymentSuccessResponse.put("status", "SUCCESS");
 				orderPaymentSuccessResponse.put("amount", String.valueOf(amountToBePaid));
 				orderPaymentSuccessResponse.put("txnId", String.valueOf(UUID.randomUUID()));
+				//				saveTransactionalDetails(Integer senderId, String senderName, Integer receiverId,
+//						String receiverName, Integer amount, Date txnDate, String purpose)
+				 Date txnDate = new Date();
+				saveTransactionalDetails(card.getCardId(),card.getCardHolderFirstName(),null,null,amountToBePaid,txnDate,"Shopping Transaction");
 				return orderPaymentSuccessResponse;
+
 			} else {
 				logger.info("===Card CVV and/or Card Expiry Date are incorrect===");
 				// Prsetteparing failure response
@@ -156,6 +165,9 @@ public class CardService {
 			orderPaymentFailureResponse.put("status", "FAILURE");
 			orderPaymentFailureResponse.put("reason", "Insufficient amount");
 			orderPaymentFailureResponse.put("currentBalance", String.valueOf(cardCurrentBalance));
+			logger.info("Transactional details save successfully");
+			
+			
 			return orderPaymentFailureResponse;
 		}
 
@@ -221,7 +233,7 @@ public class CardService {
 			moneyTransferResponse.put("status", "SUCCESS");
 			moneyTransferResponse.put("message", "Amount transferred successfully");
 			  Date txnDate = new Date();
-			saveTransactionalDetails(senderCard.getCardId(),senderCard.getCardHolderFirstName(),receiverCard.getCardId(),receiverCard.getCardHolderFirstName(),amount,txnDate);
+			saveTransactionalDetails(senderCard.getCardId(),senderCard.getCardHolderFirstName(),receiverCard.getCardId(),receiverCard.getCardHolderFirstName(),amount,txnDate,"Money transfer to another user ");
 			
 			
 		} catch (Exception e) {
@@ -238,7 +250,7 @@ public class CardService {
 	
 
 	private void saveTransactionalDetails(Integer senderId, String senderName, Integer receiverId,
-			String receiverName, Integer amount, Date txnDate) {
+			String receiverName, Integer amount, Date txnDate, String purpose) {
 //		card.setCardBalance(cardNewBalance);
 
 		TxnDetails txnDetails=new TxnDetails();
@@ -249,7 +261,9 @@ public class CardService {
 		txnDetails.setReceiverId(receiverId);
 		txnDetails.setTxnAmount(amount);
 		txnDetails.setTxnDate(txnDate);
+		txnDetails.setPurpose(purpose);
 		
+		logger.info("saveTransactionalDetails {}",txnDetails);
 		txnRepository.save(txnDetails);
 		logger.info("Transactional details save successfully");
 		
@@ -257,7 +271,6 @@ public class CardService {
 	}
 
 	public List<Card> getListOfExpiredCards() {
-		// TODO Auto-generated method stub
 		List<Card> listOfExpiredCard = new ArrayList<>();
 
 		List<Card> cards = cardRepository.findAll();

@@ -17,16 +17,16 @@ public class TxnDetails {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Integer txnId;
 	
-	@Column(nullable = false)
+	@Column(nullable = true)
 	private Integer senderId;
 	
-	@Column(nullable = false)
+	@Column(nullable = true)
 	private String senderName;
 	
-	@Column(nullable = false)
+	@Column(nullable = true)
 	private Integer receiverId;
 	
-	@Column(nullable = false)
+	@Column(nullable = true)
 	private String receiverName;
 	
 	@Column(nullable = false)
@@ -34,6 +34,9 @@ public class TxnDetails {
 	
 	@Column(nullable = false)
 	private Date txnDate;
+	
+	@Column(nullable = false)
+	private String purpose;
 
 	public Integer getTxnId() {
 		return txnId;
@@ -91,11 +94,19 @@ public class TxnDetails {
 		this.txnDate = txnDate;
 	}
 
+	public String getPurpose() {
+		return purpose;
+	}
+
+	public void setPurpose(String purpose) {
+		this.purpose = purpose;
+	}
+
 	@Override
 	public String toString() {
 		return "TxnDetails [txnId=" + txnId + ", senderId=" + senderId + ", senderName=" + senderName + ", receiverId="
 				+ receiverId + ", receiverName=" + receiverName + ", txnAmount=" + txnAmount + ", txnDate=" + txnDate
-				+ "]";
+				+ ", purpose=" + purpose + "]";
 	}
 
 	public TxnDetails() {
@@ -104,7 +115,7 @@ public class TxnDetails {
 	}
 
 	public TxnDetails(Integer txnId, Integer senderId, String senderName, Integer receiverId, String receiverName,
-			Integer txnAmount, Date txnDate) {
+			Integer txnAmount, Date txnDate, String purpose) {
 		super();
 		this.txnId = txnId;
 		this.senderId = senderId;
@@ -113,12 +124,8 @@ public class TxnDetails {
 		this.receiverName = receiverName;
 		this.txnAmount = txnAmount;
 		this.txnDate = txnDate;
+		this.purpose = purpose;
 	}
+
 	
-	
-}
-	
-	
-	
-	
-	
+}	

@@ -1,8 +1,6 @@
 package com.projects.cardpayment.controllers;
 
 import java.io.FileNotFoundException;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -12,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -39,12 +38,6 @@ public class CardController {
 	Logger logger = LoggerFactory.getLogger(CardController.class);
 
 	@Autowired
-	private CardRepository cardRepository;
-
-//	@Autowired
-//	private TxnRepository txnRepository;
-
-	@Autowired
 	private CardService cardService;
 
 	@Autowired
@@ -57,7 +50,7 @@ public class CardController {
 	public Map<String, String> createCard(@RequestBody Card card) {
 
 		logger.info("====== createCard :: Input Received ====");
-		logger.info("Card to be created :: {}",card);
+		logger.info("Card to be created :: {}", card);
 
 		final boolean cardRequestValidation = validation.createCardRequestValidation(card);
 		// cardRequestValidation :: true ==> the data is correct
@@ -66,10 +59,10 @@ public class CardController {
 		Map<String, String> createCardResponse = new HashMap<>(3);
 		if (cardRequestValidation) {
 
-			//Going to call service layer
+			// Going to call service layer
 			Card card2 = cardService.createCard(card);
-			
-			//got response from service layer
+
+			// got response from service layer
 			createCardResponse.put("status", "SUCCESS");
 			createCardResponse.put("cardId", String.valueOf(card2.getCardId()));
 			createCardResponse.put("message", "Card created successfully");
@@ -87,7 +80,7 @@ public class CardController {
 	public List<Card> getAllCards() {
 		logger.info("Inside getAllCards of CardController");
 		List<Card> allCards = cardService.getAllCards();
-		logger.info("CC : Response from sevice layer = {}",allCards);
+		logger.info("CC : Response from sevice layer = {}", allCards);
 		return allCards;
 	}
 
@@ -99,7 +92,7 @@ public class CardController {
 		final FindACardByIdResponseDTO response = new FindACardByIdResponseDTO();
 
 		try {
-			
+
 			Card foundCard = cardService.findCardById(cardId);
 			response.setStatusMessage("SUCCESS");
 			response.setStatusCode(7001);
@@ -124,8 +117,7 @@ public class CardController {
 
 		final Map<String, String> deleteCardAPIResponse = new HashMap<>(4);
 		try {
-			
-			
+
 			cardService.deleteById(cardId);
 			deleteCardAPIResponse.put("status", "SUCCESS");
 			deleteCardAPIResponse.put("statusCode", "7000"); // Project specific status code //Not a standard HTTP
@@ -155,16 +147,16 @@ public class CardController {
 
 		Card card = null;
 		logger.info("===== addMoneyToCard :: Input Received ====");
-		logger.info("Card ID :: {}",  cardId);
-		logger.info("Amount to be added :: {}",amount);
+		logger.info("Card ID :: {}", cardId);
+		logger.info("Amount to be added :: {}", amount);
 
 		if (amount > 0) {
 			logger.info("Amount is greater than 0. Its a valid amount for the txn");
 
 			try {
-				
-			 card	=cardService.addMoneyToCard(cardId,amount);
-					
+
+				card = cardService.addMoneyToCard(cardId, amount);
+
 				logger.info(amount + " Amount added to the card");
 
 				// Logic to store transaction details
@@ -206,9 +198,8 @@ public class CardController {
 
 		if (amount > 0) {
 			logger.info(amount + " amount is greater than 0. It is valid amount to proceed with the txn");
-           card= cardService.withdrawMoneyFromCard(cardId,amount);
-             
-			
+			card = cardService.withdrawMoneyFromCard(cardId, amount);
+
 			// Preparing success response
 			Map<String, String> withdrawMoneySuccessResponse = new HashMap<>();
 			withdrawMoneySuccessResponse.put("status", "SUCCESS");
@@ -234,21 +225,21 @@ public class CardController {
 	public Map<String, String> orderPayment(@RequestParam("cardId") Integer cardId,
 			@RequestParam("cardCVV") Integer cardCVV, @RequestParam("cardExpiryDate") String cardExpiryDate,
 			@RequestParam("amount") Integer amountToBePaid) {
-		Map<String, String> orderPayment =null;
+		Map<String, String> orderPayment = null;
 		logger.info("====== orderPayment :: Input Received ====");
 		logger.info("Card ID :: {}" + cardId);
-		logger.info("Card CVV :: {}" , cardCVV);
-		logger.info("Card Expiry Date :: {}" , cardExpiryDate);
-		logger.info("Amount to be paid :: {}" , amountToBePaid);
+		logger.info("Card CVV :: {}", cardCVV);
+		logger.info("Card Expiry Date :: {}", cardExpiryDate);
+		logger.info("Amount to be paid :: {}", amountToBePaid);
 
 		// Need to do amount validation
 		if (amountToBePaid > 0) {
-			logger.info(" amount is greater than 0. It is a valid amount to proceed with the txn {}",amountToBePaid);
+			logger.info(" amount is greater than 0. It is a valid amount to proceed with the txn {}", amountToBePaid);
 			orderPayment = new HashMap<>();
-			 orderPayment = cardService.orderPayment(cardId,cardCVV,cardExpiryDate,amountToBePaid);
+			orderPayment = cardService.orderPayment(cardId, cardCVV, cardExpiryDate, amountToBePaid);
 
 		} else {
-			logger.info("amount is 0 or less. It is invalid amount to proceed with the txn {}",amountToBePaid);
+			logger.info("amount is 0 or less. It is invalid amount to proceed with the txn {}", amountToBePaid);
 			orderPayment = new HashMap<>();
 			orderPayment.put("status", "FAILURE");
 			orderPayment.put("reason", "Invalid txn amount");
@@ -257,7 +248,7 @@ public class CardController {
 		return orderPayment;
 	}
 
-	//@Transactional()
+	@Transactional()
 	@PostMapping("/money-transfer")
 	public Map<String, String> moneyTransfer(@RequestParam("senderCardId") Integer senderCardId,
 			@RequestParam("receiverCardId") Integer receiverCardId, @RequestParam("amount") Integer amount)
@@ -265,19 +256,19 @@ public class CardController {
 
 		Map<String, String> moneyTransfer = null;
 		logger.info("===== moneyTransfer :: Input Received ====");
-		logger.info("Sender CardID :: {}" , senderCardId);
-		logger.info("Receiver CardID :: {}" , receiverCardId);
-		logger.info("Amount to be transfer :: {}" , amount);
+		logger.info("Sender CardID :: {}", senderCardId);
+		logger.info("Receiver CardID :: {}", receiverCardId);
+		logger.info("Amount to be transfer :: {}", amount);
 
 		if (amount >= minimumTxnAmount) {
-			logger.info(
-					 " Amount is or more. So its an valid amount to process with txn {}{}",amount,minimumTxnAmount);
+			logger.info(" Amount is or more. So its an valid amount to process with txn {}{}", amount,
+					minimumTxnAmount);
 			// Fetching sender card details to deduct amount from his card
 			moneyTransfer = cardService.moneyTransfer(senderCardId, receiverCardId, amount);
 			return moneyTransfer;
 
 		} else {
-			logger.info( "Amount is less than 100. So its an invalid amount to process the txn {}",amount);
+			logger.info("Amount is less than 100. So its an invalid amount to process the txn {}", amount);
 			// Preparing response in case of success
 			moneyTransfer = new HashMap<>(5);
 			moneyTransfer.put("status", "FAILURE");
@@ -292,9 +283,8 @@ public class CardController {
 	public List<Card> getListOfExpiredCards() {
 
 		List<Card> listOfExpiredCard = new ArrayList<>();
-	
-	      cardService.getListOfExpiredCards();
-	
+
+		cardService.getListOfExpiredCards();
 
 		return listOfExpiredCard;
 
@@ -302,15 +292,15 @@ public class CardController {
 
 	@GetMapping("/getCVVNumberByCardId/{cardId}")
 	public CVVNumApiResponseDTO getCVVNumberByCardId(@PathVariable("cardId") Integer cardId) {
-		logger.info("input received in getCVVNumberByCardId :: {}",cardId);
+		logger.info("input received in getCVVNumberByCardId :: {}", cardId);
 
 		Integer cardCVVNo = 0;
 		CVVNumApiResponseDTO cvvNumApiResponseDTO = new CVVNumApiResponseDTO();
 
 		try {
-			
-            Integer cvvNumberByCardId = cardService.getCVVNumberByCardId(cardId);
-			
+
+			Integer cvvNumberByCardId = cardService.getCVVNumberByCardId(cardId);
+
 			// Preparing success response
 			cvvNumApiResponseDTO.setCardCVVNum(cardCVVNo);
 			cvvNumApiResponseDTO.setStatusCode(200); // OK
@@ -318,7 +308,7 @@ public class CardController {
 
 		} catch (Exception e) {
 
-			logger.error("exception occurred while fetching CVV number :: Exception Message :: " + e.getMessage());
+			logger.error("exception occurred while fetching CVV number :: Exception Message :: {}",e.getMessage());
 
 			cvvNumApiResponseDTO.setCardCVVNum(cardCVVNo);
 			cvvNumApiResponseDTO.setStatusCode(500); // Internal Server Code
@@ -342,8 +332,8 @@ public class CardController {
 		try {
 			if (lowerAmount > 0 && upperAmount > 0) {
 				listOfCardBalance = new ArrayList<Card>();
-				 listOfCardBalance = cardService.getListOfCardThatHaveBalanceInBetween(lowerAmount,upperAmount);
-				
+				listOfCardBalance = cardService.getListOfCardThatHaveBalanceInBetween(lowerAmount, upperAmount);
+
 			}
 			getCardBalanceInBetweenResDTO = new GetCardBalanceInBetweenResDTO();
 			if (listOfCardBalance == null || listOfCardBalance.size() == 0) {
@@ -356,46 +346,30 @@ public class CardController {
 
 			}
 		} catch (Exception e) {
-			logger.error("Exception found {}",e.getMessage());
+			logger.error("Exception found {}", e.getMessage());
 		}
 		return getCardBalanceInBetweenResDTO;
 	}
 
-
-		
-	
-
 	@GetMapping("/getCardsByBankName/{bankName}")
 	public CardsByBankResDTO getCardsByBankName(@PathVariable String bankName) {
 		CardsByBankResDTO cardsByBankResDTO = null;
-		List<Card> allCards = null;
-		List<Card> listOfCards = null;
-		Card card = null;
-		String cardBankName = null;
+		List<Card> cardsByBankName = null;
 		try {
 
 			if (bankName != null && 2 <= bankName.length()) {
-				List<Card> cardsByBankName = cardService.getCardsByBankName(bankName);
-				allCards = cardRepository.findAll();
-				listOfCards = new ArrayList<Card>();
-				for (int i = 0; i < allCards.size(); i++) {
-					card = allCards.get(i);
-					cardBankName = card.getCardBankName();
-					if (cardBankName.equalsIgnoreCase(bankName)) {
-						listOfCards.add(card);
-					}
+				 cardsByBankName = cardService.getCardsByBankName(bankName);
 
+				cardsByBankResDTO = new CardsByBankResDTO();
+
+				if (cardsByBankName == null || cardsByBankName.size() == 0) {
+					cardsByBankResDTO.setStatus("Failure");
+					cardsByBankResDTO.setStatusCode("7000");// frontend team will have mapping as No Card Found
+				} else {
+					cardsByBankResDTO.setStatus("Success");
+					cardsByBankResDTO.setStatusCode("8000");
+					cardsByBankResDTO.setCardList(cardsByBankName);
 				}
-			}
-			cardsByBankResDTO = new CardsByBankResDTO();
-
-			if (listOfCards == null || listOfCards.size() == 0) {
-				cardsByBankResDTO.setStatus("Failure");
-				cardsByBankResDTO.setStatusCode("7000");// frontend team will have mapping as No Card Found
-			} else {
-				cardsByBankResDTO.setStatus("Success");
-				cardsByBankResDTO.setStatusCode("8000");
-				cardsByBankResDTO.setCardList(listOfCards);
 			}
 		} catch (Exception e) {
 			System.out.print(e);

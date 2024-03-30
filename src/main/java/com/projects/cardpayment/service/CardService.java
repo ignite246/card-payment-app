@@ -6,6 +6,7 @@ import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,7 +29,9 @@ import com.itextpdf.text.Paragraph;
 import com.itextpdf.text.pdf.PdfWriter;
 import com.projects.cardpayment.controllers.CardController;
 import com.projects.cardpayment.daos.CardRepository;
+import com.projects.cardpayment.daos.TxnRepository;
 import com.projects.cardpayment.entities.Card;
+import com.projects.cardpayment.entities.TxnDetails;
 
 @Service
 public class CardService {
@@ -37,6 +40,9 @@ public class CardService {
 
 	@Autowired
 	private CardRepository cardRepository;
+	
+	@Autowired
+	private TxnRepository txnRepository;
 
 	public Card createCard(Card card) {
 
@@ -138,7 +144,7 @@ public class CardService {
 				return orderPaymentSuccessResponse;
 			} else {
 				logger.info("===Card CVV and/or Card Expiry Date are incorrect===");
-				// Preparing failure response
+				// Prsetteparing failure response
 				Map<String, String> orderPaymentFailureResponse = new HashMap<>(2);
 				orderPaymentFailureResponse.put("status", "FAILURE");
 				orderPaymentFailureResponse.put("reason", "Invalid CARD CVV or EXPIRY DATE");
@@ -214,6 +220,10 @@ public class CardService {
 			moneyTransferResponse.put("amount", String.valueOf(amount));
 			moneyTransferResponse.put("status", "SUCCESS");
 			moneyTransferResponse.put("message", "Amount transferred successfully");
+			  Date txnDate = new Date();
+			saveTransactionalDetails(senderCard.getCardId(),senderCard.getCardHolderFirstName(),receiverCard.getCardId(),receiverCard.getCardHolderFirstName(),amount,txnDate);
+			
+			
 		} catch (Exception e) {
 			logger.info("EXCEPTION AT CS : {}", e.getMessage());
 			moneyTransferResponse = new HashMap<>(5);
@@ -223,6 +233,27 @@ public class CardService {
 		}
 		return moneyTransferResponse;
 
+	}
+	
+	
+
+	private void saveTransactionalDetails(Integer senderId, String senderName, Integer receiverId,
+			String receiverName, Integer amount, Date txnDate) {
+//		card.setCardBalance(cardNewBalance);
+
+		TxnDetails txnDetails=new TxnDetails();
+		
+		txnDetails.setSenderName(senderName);
+		txnDetails.setSenderId(senderId);
+		txnDetails.setReceiverName(receiverName);
+		txnDetails.setReceiverId(receiverId);
+		txnDetails.setTxnAmount(amount);
+		txnDetails.setTxnDate(txnDate);
+		
+		txnRepository.save(txnDetails);
+		logger.info("Transactional details save successfully");
+		
+		
 	}
 
 	public List<Card> getListOfExpiredCards() {

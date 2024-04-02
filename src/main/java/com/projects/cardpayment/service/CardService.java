@@ -202,19 +202,37 @@ public class CardService {
 
 	public Map<String, String> moneyTransfer(Integer senderCardId, Integer receiverCardId, Integer amount)
 			throws FileNotFoundException, DocumentException {
-		// TODO Auto-generated method stub
+
+		logger.info("input received in money tranfer service");
+		logger.info("sendercardId :: {},receiverCardId :: {},amount :: {}", senderCardId, receiverCardId, amount);
+
 		Map<String, String> moneyTransferResponse = null;
 
 		// Fetching receiver card details to credit amount in his card
 
 		try {
 			Card senderCard = cardRepository.findById(senderCardId).get();
+			Card receiverCard = cardRepository.findById(receiverCardId).get();
 			Integer senderCardBalance = senderCard.getCardBalance();
+			if(!senderCard.getCardBankName().equals(receiverCard.getCardBankName())) {
+			if (amount > 5000) { 
+				logger.info("amount is greater than 5000");
+				logger.info("service charge will be deducted");
+				Integer extraAmount = amount - 5000;
+				Integer serviceChargeAmount = (extraAmount * 5) / 100;
+				logger.info("calculated service charged {}", serviceChargeAmount);
+
+			
+
+				amount = amount - serviceChargeAmount;
+				logger.info("Final amount after service charge deduction :: " + amount);
+			}
+			}
 			Integer senderUpdatedCardBalance = senderCardBalance - amount;
 			senderCard.setCardBalance(senderUpdatedCardBalance);
 			cardRepository.save(senderCard);
 			logger.info(amount + " amount deducted from sender's card successfully");
-			Card receiverCard = cardRepository.findById(receiverCardId).get();
+			
 			Integer receiverCardBalance = receiverCard.getCardBalance();
 			Integer receiverUpdatedCardBalance = receiverCardBalance + amount;
 			receiverCard.setCardBalance(receiverUpdatedCardBalance);
@@ -239,7 +257,7 @@ public class CardService {
 
 	private void txnPdf(Card senderCard, Card receiverCard, Integer amount)
 			throws FileNotFoundException, DocumentException {
-		
+
 		Document document = new Document(PageSize.LETTER);
 		String uuid = String.valueOf(UUID.randomUUID());
 		String pdfName = uuid + "_receipt.pdf";

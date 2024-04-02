@@ -206,10 +206,9 @@ public class CardController {
 			withdrawMoneySuccessResponse.put("amount", String.valueOf(amount));
 			withdrawMoneySuccessResponse.put("message", "Money withdrawn successfully");
 			return withdrawMoneySuccessResponse;
-
+			
 		} else {
 			logger.info(amount + " amount is 0 or less. It is invalid amount to proceed with the txn");
-
 			// Preparing Failure response
 			Map<String, String> withdrawMoneyFailureResponse = new HashMap<>();
 			withdrawMoneyFailureResponse.put("status", "FAILURE");

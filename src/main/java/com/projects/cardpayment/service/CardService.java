@@ -80,9 +80,9 @@ public class CardService {
 
 	public Card addMoneyToCard(Integer cardId, int amount) {
 		Card card = null;
+		String uuid = null;
 		Integer cardCurrentBalance = null;
 		Integer cardNewBalance = null;
-
 		try {
 			card = cardRepository.findById(cardId).get();
 			cardCurrentBalance = card.getCardBalance();
@@ -91,13 +91,9 @@ public class CardService {
 			card = cardRepository.save(card);
 			logger.info("card {}", card);
 			Date txnDate = new Date();
+			uuid = txnPdf(null, card, amount);
 			saveTransactionalDetails(null, null, card.getCardId(), card.getCardHolderFirstName(), amount, txnDate,
-					"Amount Deposited");
-			try {
-				txnPdf(null, card, amount);
-			} catch (FileNotFoundException | DocumentException e) {
-				logger.info(e.getMessage());
-			}
+					"Amount Deposited", uuid);
 		} catch (Exception e) {
 			logger.info("CS : Exception  {}", e.getMessage());
 		}
@@ -105,32 +101,29 @@ public class CardService {
 	}
 
 	public Card withdrawMoneyFromCard(Integer cardId, Integer amount) {
-		// TODO Auto-generated method stub
-
 		Card card = null;
 		Integer cardCurrentBalance = null;
 		Integer cardNewBalance = null;
-
+		String uuid = null;
 		card = cardRepository.findById(cardId).get();
 		cardCurrentBalance = card.getCardBalance();
 		cardNewBalance = cardCurrentBalance - amount;
 		card.setCardBalance(cardNewBalance);
 		Date txnDate = new Date();
-		saveTransactionalDetails(card.getCardId(), card.getCardHolderFirstName(), null, null, amount, txnDate,
-				"withdraw Transaction");
 		try {
-			txnPdf(card, null, amount);
+			uuid = txnPdf(card, null, amount);
+			saveTransactionalDetails(card.getCardId(), card.getCardHolderFirstName(), null, null, amount, txnDate,
+					"withdraw Transaction", uuid);
 		} catch (FileNotFoundException | DocumentException e) {
 			logger.info(e.getMessage());
 		}
 		return cardRepository.save(card);
-
 	}
 
 	public Map<String, String> orderPayment(Integer cardId, Integer cardCVV, String cardExpiryDate,
 			Integer amountToBePaid) {
-		// TODO Auto-generated method stub
 		Card card = null;
+		String uuid = null;
 		card = cardRepository.findById(cardId).get();
 		Integer cardCurrentBalance = card.getCardBalance();
 		if (cardCurrentBalance >= amountToBePaid) {
@@ -156,14 +149,14 @@ public class CardService {
 				orderPaymentSuccessResponse.put("status", "SUCCESS");
 				orderPaymentSuccessResponse.put("amount", String.valueOf(amountToBePaid));
 				orderPaymentSuccessResponse.put("txnId", String.valueOf(UUID.randomUUID()));
-				// saveTransactionalDetails(Integer senderId, String senderName, Integer
-				// receiverId,
-//						String receiverName, Integer amount, Date txnDate, String purpose)
+
 				Date txnDate = new Date();
-				saveTransactionalDetails(card.getCardId(), card.getCardHolderFirstName(), null, null, amountToBePaid,
-						txnDate, "Shopping Transaction");
+				
 				try {
-					txnPdf(card, null, amountToBePaid);
+					 uuid = txnPdf(card, null, amountToBePaid);
+					 logger.info("uuid generated : {}",uuid);
+					 saveTransactionalDetails(card.getCardId(), card.getCardHolderFirstName(), null, null, amountToBePaid,
+								txnDate,"Shopping Transaction",uuid);
 				} catch (FileNotFoundException | DocumentException e) {
 					logger.info(e.getMessage());
 				}
@@ -231,17 +224,19 @@ public class CardService {
 			Integer senderUpdatedCardBalance = senderCardBalance - amount;
 			senderCard.setCardBalance(senderUpdatedCardBalance);
 			cardRepository.save(senderCard);
-			logger.info(amount + " amount deducted from sender's card successfully");
+			logger.info(" amount deducted from sender's card successfully {}",amount);
 			
 			Integer receiverCardBalance = receiverCard.getCardBalance();
 			Integer receiverUpdatedCardBalance = receiverCardBalance + amount;
 			receiverCard.setCardBalance(receiverUpdatedCardBalance);
 			cardRepository.save(receiverCard);
-			logger.info(amount + " amount credited to receiver's card successfully");
+			logger.info(" amount credited to receiver's card successfully {}",amount  );
 			moneyTransferResponse = new HashMap<>(5);
 			moneyTransferResponse.put("status", "Success");
 			moneyTransferResponse.put("message", "Amount transfer success !!");
-			txnPdf(senderCard, receiverCard, amount);
+			String uuid = txnPdf(senderCard, receiverCard, amount);
+			 saveTransactionalDetails(senderCard.getCardId(), senderCard.getCardHolderFirstName(), receiverCard.getCardId(), receiverCard.getCardHolderFirstName(), amount,
+						new Date(),"Card to card txn",uuid);
 			logger.info("Txn Pdf creating Successfull");
 
 		} catch (Exception e) {
@@ -255,7 +250,7 @@ public class CardService {
 
 	}
 
-	private void txnPdf(Card senderCard, Card receiverCard, Integer amount)
+	private String txnPdf(Card senderCard, Card receiverCard, Integer amount)
 			throws FileNotFoundException, DocumentException {
 
 		Document document = new Document(PageSize.LETTER);
@@ -277,7 +272,7 @@ public class CardService {
 		}
 		Paragraph para4 = new Paragraph("Txn Amount :: " + "$" + amount, font);
 		document.add(para4);
-		Paragraph para5 = new Paragraph("Txn ID :: " + UUID.randomUUID(), font);
+		Paragraph para5 = new Paragraph("Txn ID :: " + uuid, font);
 		document.add(para5);
 		Paragraph para6 = new Paragraph("Txn Timestamp :: " + new Timestamp(System.currentTimeMillis()), font);
 		document.add(para6);
@@ -285,10 +280,11 @@ public class CardService {
 		Paragraph para7 = new Paragraph("Generated by system username :: " + username, font);
 		document.add(para7);
 		document.close();
+		return uuid;
 	}
 
 	private void saveTransactionalDetails(Integer senderId, String senderName, Integer receiverId, String receiverName,
-			Integer amount, Date txnDate, String purpose) {
+			Integer amount, Date txnDate, String purpose,String uid) {
 
 		TxnDetails txnDetails = new TxnDetails();
 
@@ -299,8 +295,10 @@ public class CardService {
 		txnDetails.setTxnAmount(amount);
 		txnDetails.setTxnDate(txnDate);
 		txnDetails.setPurpose(purpose);
+		txnDetails.setUid(uid);
 
 		logger.info("saveTransactionalDetails {}", txnDetails);
+		logger.info("setting uid {}"+uid);
 		txnRepository.save(txnDetails);
 		logger.info("Transactional details save successfully");
 
@@ -343,7 +341,6 @@ public class CardService {
 	}
 
 	public List<Card> getListOfCardThatHaveBalanceInBetween(Integer lowerAmount, Integer upperAmount) {
-		// TODO Auto-generated method stub
 		List<Card> allCards = null;
 		List<Card> listOfCardBalance = null;
 		Card card = null;

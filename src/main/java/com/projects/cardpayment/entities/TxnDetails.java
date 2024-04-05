@@ -18,7 +18,7 @@ public class TxnDetails {
 	private Integer txnId;
 	
 	@Column(nullable = true)
-	private Integer senderId;
+	private Integer senderId; //cardId of the sender
 	
 	@Column(nullable = true)
 	private String senderName;

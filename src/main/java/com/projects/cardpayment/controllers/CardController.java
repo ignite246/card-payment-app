@@ -22,12 +22,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.itextpdf.text.DocumentException;
-import com.projects.cardpayment.dtos.CVVNumApiResponseDTO;
-import com.projects.cardpayment.dtos.CardsByBankResDTO;
-import com.projects.cardpayment.dtos.FindACardByIdResponseDTO;
-import com.projects.cardpayment.dtos.GetCardBalanceInBetweenResDTO;
 import com.projects.cardpayment.entities.Card;
 import com.projects.cardpayment.repository.CardRepository;
+import com.projects.cardpayment.response.dto.CVVNumApiResponseDTO;
+import com.projects.cardpayment.response.dto.CardsByBankResDTO;
+import com.projects.cardpayment.response.dto.FindACardByIdResponseDTO;
+import com.projects.cardpayment.response.dto.GetCardBalanceInBetweenResDTO;
 import com.projects.cardpayment.service.CardService;
 import com.projects.cardpayment.utils.Validation;
 

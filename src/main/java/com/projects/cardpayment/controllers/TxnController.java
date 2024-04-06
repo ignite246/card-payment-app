@@ -1,20 +1,16 @@
 package com.projects.cardpayment.controllers;
 
-import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.projects.cardpayment.dtos.GetLargestAmountTxnDetailsDTO;
-import com.projects.cardpayment.entities.Card;
-import com.projects.cardpayment.entities.TxnDetails;
 import com.projects.cardpayment.repository.TxnRepository;
+import com.projects.cardpayment.response.dto.GetLargestAmountTxnDetailsResDTO;
+import com.projects.cardpayment.response.dto.GetSmallestAmountTxnDetailsResDTO;
 import com.projects.cardpayment.response.dto.TxnDetailsByCardIdResDTO;
 import com.projects.cardpayment.service.TxnService;
 
@@ -45,9 +41,9 @@ public class TxnController {
 	}
 
 	@GetMapping("Get-txnDetails-of-largestAmount-by-cardId/{cardId}")
-	public GetLargestAmountTxnDetailsDTO getTransactionDetailsOfTheLargestAmount(
+	public GetLargestAmountTxnDetailsResDTO getTransactionDetailsOfTheLargestAmount(
 			@PathVariable("cardId") Integer cardId) {
-		GetLargestAmountTxnDetailsDTO txnDetail = null;
+		GetLargestAmountTxnDetailsResDTO txnDetail = null;
 		if (cardId > 0 && cardId != null) {
 
 			txnDetail = txnService.getTransactionDetailsOfTheLargestAmount(cardId);
@@ -55,5 +51,21 @@ public class TxnController {
 
 		return txnDetail;
 
+	}
+	
+	@GetMapping("Get-txnDetails-of-smallest-by-cardId/{cardId}")
+	public GetSmallestAmountTxnDetailsResDTO getTransactionDetailsOfTheSmallestAmount(@PathVariable("cardId") Integer cardId) {
+		
+		GetSmallestAmountTxnDetailsResDTO txnDetail=null;
+		if (   cardId != null &&  cardId >= 0) {
+			txnDetail=txnService.getTransactionDetailsOfTheSmallestAmount(cardId);
+		}
+		else {
+			txnDetail=new GetSmallestAmountTxnDetailsResDTO(); 
+			txnDetail.setStatus("INVALID INPUT");
+			txnDetail.setStatusCode("7000");
+		}
+		
+		return txnDetail;
 	}
 }

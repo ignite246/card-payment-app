@@ -1,10 +1,10 @@
-package com.projects.cardpayment.dtos;
+package com.projects.cardpayment.response.dto;
 
 import java.util.List;
 
 import com.projects.cardpayment.entities.TxnDetails;
 
-public class GetLargestAmountTxnDetailsDTO {
+public class GetLargestAmountTxnDetailsResDTO {
 	
 	private String status;//Success,Failure
 	private String statusCode;
@@ -32,11 +32,11 @@ public class GetLargestAmountTxnDetailsDTO {
 		return "GetLargestAmountTxnDetailsDTO [status=" + status + ", statusCode=" + statusCode + ", txnDetails="
 				+ txnDetails + "]";
 	}
-	public GetLargestAmountTxnDetailsDTO() {
+	public GetLargestAmountTxnDetailsResDTO() {
 		super();
 		// TODO Auto-generated constructor stub
 	}
-	public GetLargestAmountTxnDetailsDTO(String status, String statusCode, TxnDetails txnDetails) {
+	public GetLargestAmountTxnDetailsResDTO(String status, String statusCode, TxnDetails txnDetails) {
 		super();
 		this.status = status;
 		this.statusCode = statusCode;

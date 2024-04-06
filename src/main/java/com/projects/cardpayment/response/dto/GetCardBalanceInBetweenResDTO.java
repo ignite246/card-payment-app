@@ -1,4 +1,4 @@
-package com.projects.cardpayment.dtos;
+package com.projects.cardpayment.response.dto;
 
 import java.util.List;
 

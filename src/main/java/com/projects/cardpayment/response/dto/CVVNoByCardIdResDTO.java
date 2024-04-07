@@ -1,13 +1,16 @@
-package com.projects.cardpayment.dtos;
+package com.projects.cardpayment.response.dto;
 
 import java.util.List;
 
 import com.projects.cardpayment.entities.Card;
 
-public class GetListOfExpiredCardsDTO {
+public class CVVNoByCardIdResDTO {
+	
 	private String status;//Success,Failure
 	private String statusCode;//Invalid-401,ServiceDown-402
 	private List<Card> cardList;
+	
+	
 	public String getStatus() {
 		return status;
 	}
@@ -26,15 +29,14 @@ public class GetListOfExpiredCardsDTO {
 	public void setCardList(List<Card> cardList) {
 		this.cardList = cardList;
 	}
-	public GetListOfExpiredCardsDTO() {
-		super();
-		// TODO Auto-generated constructor stub
-	}
-	public GetListOfExpiredCardsDTO(String status, String statusCode, List<Card> cardList) {
+	public CVVNoByCardIdResDTO(String status, String statusCode, List<Card> cardList) {
 		super();
 		this.status = status;
 		this.statusCode = statusCode;
 		this.cardList = cardList;
+	}
+	public CVVNoByCardIdResDTO() {
+		
 	}
 	
 	

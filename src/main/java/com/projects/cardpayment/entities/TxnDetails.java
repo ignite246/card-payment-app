@@ -18,7 +18,7 @@ public class TxnDetails {
 	private Integer txnId;
 	
 	@Column(nullable = true)
-	private Integer senderId;
+	private Integer senderId; //cardId of the sender
 	
 	@Column(nullable = true)
 	private String senderName;
@@ -37,6 +37,9 @@ public class TxnDetails {
 	
 	@Column(nullable = false)
 	private String purpose;
+	
+	@Column(nullable=false)
+	private String uid;
 
 	public Integer getTxnId() {
 		return txnId;
@@ -102,20 +105,26 @@ public class TxnDetails {
 		this.purpose = purpose;
 	}
 
+	public String getUid() {
+		return uid;
+	}
+
+	public void setUid(String uid) {
+		this.uid = uid;
+	}
+
 	@Override
 	public String toString() {
 		return "TxnDetails [txnId=" + txnId + ", senderId=" + senderId + ", senderName=" + senderName + ", receiverId="
 				+ receiverId + ", receiverName=" + receiverName + ", txnAmount=" + txnAmount + ", txnDate=" + txnDate
-				+ ", purpose=" + purpose + "]";
+				+ ", purpose=" + purpose + ", uid=" + uid + "]";
 	}
 
 	public TxnDetails() {
-		super();
-		// TODO Auto-generated constructor stub
 	}
 
 	public TxnDetails(Integer txnId, Integer senderId, String senderName, Integer receiverId, String receiverName,
-			Integer txnAmount, Date txnDate, String purpose) {
+			Integer txnAmount, Date txnDate, String purpose, String uid) {
 		super();
 		this.txnId = txnId;
 		this.senderId = senderId;
@@ -125,7 +134,9 @@ public class TxnDetails {
 		this.txnAmount = txnAmount;
 		this.txnDate = txnDate;
 		this.purpose = purpose;
+		this.uid = uid;
 	}
 
-	
-}	
+		
+
+	}	

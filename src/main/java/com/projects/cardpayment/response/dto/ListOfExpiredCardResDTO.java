@@ -1,10 +1,10 @@
-package com.projects.cardpayment.dtos;
+package com.projects.cardpayment.response.dto;
 
 import java.util.List;
 
 import com.projects.cardpayment.entities.Card;
 
-public class ListOfExpiredCardDTO {
+public class ListOfExpiredCardResDTO {
 	
 	private String status;//Success,Failure
 	private String statusCode;//Invalid-401,ServiceDown-402
@@ -27,13 +27,13 @@ public class ListOfExpiredCardDTO {
 	public void setCardList(List<Card> cardList) {
 		this.cardList = cardList;
 	}
-	public ListOfExpiredCardDTO(String status, String statusCode, List<Card> cardList) {
+	public ListOfExpiredCardResDTO(String status, String statusCode, List<Card> cardList) {
 		super();
 		this.status = status;
 		this.statusCode = statusCode;
 		this.cardList = cardList;
 	}
-	public ListOfExpiredCardDTO() {
+	public ListOfExpiredCardResDTO() {
 		
 	}
 	

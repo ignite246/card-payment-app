@@ -2,7 +2,6 @@ package com.projects.cardpayment.response.dto;
 
 import java.util.List;
 
-import com.projects.cardpayment.entities.Card;
 import com.projects.cardpayment.entities.TxnDetails;
 
 public class TxnDetailsByCardIdResDTO {
@@ -35,7 +34,6 @@ public class TxnDetailsByCardIdResDTO {
 	}
 	public TxnDetailsByCardIdResDTO() {
 		super();
-		// TODO Auto-generated constructor stub
 	}
 	public TxnDetailsByCardIdResDTO(String status, String statusCode, List<TxnDetails> txnList) {
 		super();

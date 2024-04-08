@@ -23,7 +23,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.itextpdf.text.DocumentException;
 import com.projects.cardpayment.entities.Card;
-import com.projects.cardpayment.repository.CardRepository;
 import com.projects.cardpayment.response.dto.CVVNumApiResponseDTO;
 import com.projects.cardpayment.response.dto.CardsByBankResDTO;
 import com.projects.cardpayment.response.dto.FindACardByIdResponseDTO;
@@ -86,7 +85,7 @@ public class CardController {
 
 	@GetMapping("/find-a-card-by-id/{cardId}")
 	public FindACardByIdResponseDTO findACardById(@PathVariable("cardId") Integer cardId) {
-		logger.info("====== findACardById :: Input	 Received ====");
+		logger.info("findACardById :: Input	 Received");
 		logger.info("Card ID :: {}", cardId);
 
 		final FindACardByIdResponseDTO response = new FindACardByIdResponseDTO();
@@ -99,21 +98,21 @@ public class CardController {
 			response.setCard(foundCard);
 
 		} catch (Exception ex) {
-			logger.error("Exception occurred while finding the card of the id :: " + cardId);
-			logger.error("Exception reason :: " + ex.getMessage());
+			logger.error("Exception occurred while finding the card of the id :: {}", cardId);
+			logger.error("Exception reason :: {} ", ex.getMessage());
 			response.setStatusMessage("FAILURE");
 			response.setStatusCode(8005); // Project specific status code
 			response.setCard(null);
 		}
 
-		logger.info("findACardById API response :: " + response);
+		logger.info("findACardById API response ::{} ", response);
 		return response;
 	}
 
 	@DeleteMapping("/delete-a-card-by-id/{cardId}")
 	public Map<String, String> deleteACardById(@PathVariable("cardId") Integer cardId) {
 		logger.info("====== deleteACardById :: Input Received ====");
-		logger.info("Card ID :: " + cardId);
+		logger.info("Card ID ::{} ", cardId);
 
 		final Map<String, String> deleteCardAPIResponse = new HashMap<>(4);
 		try {
@@ -126,8 +125,8 @@ public class CardController {
 			deleteCardAPIResponse.put("message", "Card deleted successfully");
 			deleteCardAPIResponse.put("cardId", String.valueOf(cardId));
 		} catch (Exception ex) {
-			logger.error("Exception occurred while deleting the card of the id :: " + cardId);
-			logger.error("Exception reason :: " + ex.getMessage());
+			logger.error("Exception occurred while deleting the card of the id :: {} ", cardId);
+			logger.error("Exception reason ::{} ", ex.getMessage());
 			deleteCardAPIResponse.put("status", "FAILURE");
 			deleteCardAPIResponse.put("statusCode", "8000"); // Project specific status code //Not a standard HTTP
 																// Status Code //Only project wale know ish code ka
@@ -137,7 +136,7 @@ public class CardController {
 			deleteCardAPIResponse.put("reason", "Card ID does not exist");
 		}
 
-		logger.info("deleteACardById API Response :: " + deleteCardAPIResponse);
+		logger.info("deleteACardById API Response :: {} ", deleteCardAPIResponse);
 		return deleteCardAPIResponse;
 	}
 
@@ -157,7 +156,7 @@ public class CardController {
 
 				card = cardService.addMoneyToCard(cardId, amount);
 
-				logger.info(amount + " Amount added to the card");
+				logger.info("{} Amount added to the card", amount);
 
 				// Logic to store transaction details
 
@@ -191,14 +190,13 @@ public class CardController {
 	@PatchMapping("/withdraw-money-from-card")
 	public Map<String, String> withdrawMoneyFromCard(@RequestParam("cardId") Integer cardId,
 			@RequestParam("amount") Integer amount) {
-		Card card = null;
 		logger.info("====== withdrawMoneyFromCard :: Input Received ====");
-		logger.info("Card ID :: " + cardId);
-		logger.info("Withdrawal amount :: " + amount);
+		logger.info("Card ID :: {} ", cardId);
+		logger.info("Withdrawal amount :: {} ", amount);
 
 		if (amount > 0) {
-			logger.info(amount + " amount is greater than 0. It is valid amount to proceed with the txn");
-			card = cardService.withdrawMoneyFromCard(cardId, amount);
+			logger.info("{} amount is greater than 0. It is valid amount to proceed with the txn", amount);
+			cardService.withdrawMoneyFromCard(cardId, amount);
 
 			// Preparing success response
 			Map<String, String> withdrawMoneySuccessResponse = new HashMap<>();
@@ -206,9 +204,9 @@ public class CardController {
 			withdrawMoneySuccessResponse.put("amount", String.valueOf(amount));
 			withdrawMoneySuccessResponse.put("message", "Money withdrawn successfully");
 			return withdrawMoneySuccessResponse;
-			
+
 		} else {
-			logger.info(amount + " amount is 0 or less. It is invalid amount to proceed with the txn");
+			logger.info("{} amount is 0 or less. It is invalid amount to proceed with the txn ", amount);
 			// Preparing Failure response
 			Map<String, String> withdrawMoneyFailureResponse = new HashMap<>();
 			withdrawMoneyFailureResponse.put("status", "FAILURE");
@@ -226,7 +224,7 @@ public class CardController {
 			@RequestParam("amount") Integer amountToBePaid) {
 		Map<String, String> orderPayment = null;
 		logger.info("====== orderPayment :: Input Received ====");
-		logger.info("Card ID :: {}" + cardId);
+		logger.info("Card ID :: {}" , cardId);
 		logger.info("Card CVV :: {}", cardCVV);
 		logger.info("Card Expiry Date :: {}", cardExpiryDate);
 		logger.info("Amount to be paid :: {}", amountToBePaid);
@@ -283,7 +281,7 @@ public class CardController {
 
 		List<Card> listOfExpiredCard = new ArrayList<>();
 
-		cardService.getListOfExpiredCards();
+		listOfExpiredCard = cardService.getListOfExpiredCards();
 
 		return listOfExpiredCard;
 
@@ -293,23 +291,22 @@ public class CardController {
 	public CVVNumApiResponseDTO getCVVNumberByCardId(@PathVariable("cardId") Integer cardId) {
 		logger.info("input received in getCVVNumberByCardId :: {}", cardId);
 
-		Integer cardCVVNo = 0;
 		CVVNumApiResponseDTO cvvNumApiResponseDTO = new CVVNumApiResponseDTO();
-
+		Integer cvvNumberByCardId = 0;
 		try {
 
-			Integer cvvNumberByCardId = cardService.getCVVNumberByCardId(cardId);
+			cvvNumberByCardId = cardService.getCVVNumberByCardId(cardId);
 
 			// Preparing success response
-			cvvNumApiResponseDTO.setCardCVVNum(cardCVVNo);
+			cvvNumApiResponseDTO.setCardCVVNum(cvvNumberByCardId);
 			cvvNumApiResponseDTO.setStatusCode(200); // OK
 			cvvNumApiResponseDTO.setStatusMessage("Success");
 
 		} catch (Exception e) {
 
-			logger.error("exception occurred while fetching CVV number :: Exception Message :: {}" + e.getMessage());
+			logger.error("exception occurred while fetching CVV number :: Exception Message :: {}", e.getMessage());
 
-			cvvNumApiResponseDTO.setCardCVVNum(cardCVVNo);
+			cvvNumApiResponseDTO.setCardCVVNum(cvvNumberByCardId);
 			cvvNumApiResponseDTO.setStatusCode(500); // Internal Server Code
 			cvvNumApiResponseDTO.setStatusMessage("Failure");
 
@@ -317,7 +314,7 @@ public class CardController {
 
 		}
 
-		logger.info("Response of the getCVVNumberByCardId API :: " + cvvNumApiResponseDTO);
+		logger.info("Response of the getCVVNumberByCardId API :: {} ", cvvNumApiResponseDTO);
 		return cvvNumApiResponseDTO;
 	}
 
@@ -326,16 +323,14 @@ public class CardController {
 			@RequestParam("lowerAmount") Integer lowerAmount, @RequestParam("upperAmount") Integer upperAmount) {
 		GetCardBalanceInBetweenResDTO getCardBalanceInBetweenResDTO = null;
 		List<Card> listOfCardBalance = null;
-		List<Card> allCards = null;
-		Card card = null;
 		try {
 			if (lowerAmount > 0 && upperAmount > 0) {
-				listOfCardBalance = new ArrayList<Card>();
+				listOfCardBalance = new ArrayList<>();
 				listOfCardBalance = cardService.getListOfCardThatHaveBalanceInBetween(lowerAmount, upperAmount);
 
 			}
 			getCardBalanceInBetweenResDTO = new GetCardBalanceInBetweenResDTO();
-			if (listOfCardBalance == null || listOfCardBalance.size() == 0) {
+			if (listOfCardBalance == null || listOfCardBalance.isEmpty()) {
 				getCardBalanceInBetweenResDTO.setStatus("Failure");
 				getCardBalanceInBetweenResDTO.setStatusCode("1");// frontend team will have mapping as No Card Found
 			} else {
@@ -357,11 +352,11 @@ public class CardController {
 		try {
 
 			if (bankName != null && 2 <= bankName.length()) {
-				 cardsByBankName = cardService.getCardsByBankName(bankName);
+				cardsByBankName = cardService.getCardsByBankName(bankName);
 
 				cardsByBankResDTO = new CardsByBankResDTO();
 
-				if (cardsByBankName == null || cardsByBankName.size() == 0) {
+				if (cardsByBankName == null || cardsByBankName.isEmpty()) {
 					cardsByBankResDTO.setStatus("Failure");
 					cardsByBankResDTO.setStatusCode("7000");// frontend team will have mapping as No Card Found
 				} else {
@@ -371,12 +366,10 @@ public class CardController {
 				}
 			}
 		} catch (Exception e) {
-			System.out.print(e);
+			logger.error("Exception occured while executing the getCardsByBankName {}", e.getMessage());
 
 		}
 		return cardsByBankResDTO;
 	}
-	
-	
 
 }

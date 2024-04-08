@@ -1,7 +1,5 @@
 package com.projects.cardpayment.response.dto;
 
-import java.util.List;
-
 import com.projects.cardpayment.entities.TxnDetails;
 
 public class GetLargestAmountTxnDetailsResDTO {
@@ -34,7 +32,6 @@ public class GetLargestAmountTxnDetailsResDTO {
 	}
 	public GetLargestAmountTxnDetailsResDTO() {
 		super();
-		// TODO Auto-generated constructor stub
 	}
 	public GetLargestAmountTxnDetailsResDTO(String status, String statusCode, TxnDetails txnDetails) {
 		super();

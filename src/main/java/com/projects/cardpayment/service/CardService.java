@@ -27,7 +27,6 @@ import com.itextpdf.text.FontFactory;
 import com.itextpdf.text.PageSize;
 import com.itextpdf.text.Paragraph;
 import com.itextpdf.text.pdf.PdfWriter;
-import com.projects.cardpayment.controllers.CardController;
 import com.projects.cardpayment.entities.Card;
 import com.projects.cardpayment.entities.TxnDetails;
 import com.projects.cardpayment.repository.CardRepository;
@@ -36,7 +35,7 @@ import com.projects.cardpayment.repository.TxnRepository;
 @Service
 public class CardService {
 
-	Logger logger = LoggerFactory.getLogger(CardController.class);
+	Logger logger = LoggerFactory.getLogger(CardService.class);
 
 	@Autowired
 	private CardRepository cardRepository;
@@ -131,8 +130,8 @@ public class CardService {
 
 			Integer cardCVVInDB = card.getCardCVVNumber();
 			String cardExpiryDateInDB = card.getCardExpiryDate();
-			logger.info("cardCVVInDB :: " + cardCVVInDB);
-			logger.info("cardExpiryDateInDB :: " + cardExpiryDateInDB);
+			logger.info("cardCVVInDB :: {} ", cardCVVInDB);
+			logger.info("cardExpiryDateInDB :: {}", cardExpiryDateInDB);
 
 			// Need to do the Card validation before proceeding with the payment
 			if (Objects.equals(cardCVV, cardCVVInDB) && cardExpiryDate.equals(cardExpiryDateInDB)) {
@@ -210,19 +209,18 @@ public class CardService {
 			Card receiverCard = cardRepository.findById(receiverCardId).get();
 			Integer senderCardBalance = senderCard.getCardBalance();
 			if (!senderCard.getCardBankName().equals(receiverCard.getCardBankName())) {
-				if (amount > 5000) {//6000
-
+				if (amount > 5000) {// 6000
 					logger.info("amount is greater than 5000");
 					logger.info("service charge will be deducted");
 					Integer extraAmount = amount - 5000;
 					serviceChargeAmount = (extraAmount * 5) / 100;
 					logger.info("calculated service charged {}", serviceChargeAmount);
 
-					amount = amount - serviceChargeAmount;//5950
-					logger.info("Final amount after service charge deduction :: " + amount);
+					amount = amount - serviceChargeAmount;// 5950
+					logger.info("Final amount after service charge deduction :: {} ", amount);
 				}
 			}
-			newAmount = amount + serviceChargeAmount;//5950+50=6000
+			newAmount = amount + serviceChargeAmount;// 5950+50=6000
 			Integer senderUpdatedCardBalance = senderCardBalance - newAmount;
 			logger.info("newAmount{}", newAmount);
 			senderCard.setCardBalance(senderUpdatedCardBalance);
@@ -302,7 +300,7 @@ public class CardService {
 		txnDetails.setUid(uid);
 
 		logger.info("saveTransactionalDetails {}", txnDetails);
-		logger.info("setting uid {}" + uid);
+		logger.info("setting uid {}", uid);
 		txnRepository.save(txnDetails);
 		logger.info("Transactional details save successfully");
 
@@ -335,7 +333,6 @@ public class CardService {
 	}
 
 	public Integer getCVVNumberByCardId(Integer cardId) {
-		// TODO Auto-generated method stub
 		Integer cardCVVNo = 0;
 		Card card = cardRepository.findById(cardId).get();
 		cardCVVNo = card.getCardCVVNumber();
@@ -346,12 +343,16 @@ public class CardService {
 
 	public List<Card> getListOfCardThatHaveBalanceInBetween(Integer lowerAmount, Integer upperAmount) {
 		List<Card> allCards = null;
-		List<Card> listOfCardBalance = null;
+		List<Card> listOfCardBalance = new ArrayList<>();
 		Card card = null;
 		allCards = cardRepository.findAll();
+
+		logger.info("allCards {}", allCards);
+
 		for (int i = 0; i < allCards.size(); i++) {
 			card = allCards.get(i);
 			Integer cardBalance = card.getCardBalance();
+			logger.info("card Balance*** {}", cardBalance);
 
 			if (cardBalance >= lowerAmount && cardBalance <= upperAmount) {
 
@@ -369,7 +370,7 @@ public class CardService {
 		String cardBankName = null;
 
 		allCards = cardRepository.findAll();
-		listOfCards = new ArrayList<Card>();
+		listOfCards = new ArrayList<>();
 		for (int i = 0; i < allCards.size(); i++) {
 			card = allCards.get(i);
 			cardBankName = card.getCardBankName();

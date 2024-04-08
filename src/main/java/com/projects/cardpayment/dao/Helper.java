@@ -25,4 +25,9 @@ public class Helper {
 		return txnRepository.findAll();
 	}
 
+	public List<TxnDetails> getBySenderId(Integer cardId)
+	{
+	 return txnRepository.findBySenderId(cardId);	
+	}
+	
 }

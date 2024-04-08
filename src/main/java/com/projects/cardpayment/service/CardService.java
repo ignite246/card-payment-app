@@ -151,12 +151,12 @@ public class CardService {
 				orderPaymentSuccessResponse.put("txnId", String.valueOf(UUID.randomUUID()));
 
 				Date txnDate = new Date();
-				
+
 				try {
-					 uuid = txnPdf(card, null, amountToBePaid);
-					 logger.info("uuid generated : {}",uuid);
-					 saveTransactionalDetails(card.getCardId(), card.getCardHolderFirstName(), null, null, amountToBePaid,
-								txnDate,"Shopping Transaction",uuid);
+					uuid = txnPdf(card, null, amountToBePaid);
+					logger.info("uuid generated : {}", uuid);
+					saveTransactionalDetails(card.getCardId(), card.getCardHolderFirstName(), null, null,
+							amountToBePaid, txnDate, "Shopping Transaction", uuid);
 				} catch (FileNotFoundException | DocumentException e) {
 					logger.info(e.getMessage());
 				}
@@ -204,39 +204,43 @@ public class CardService {
 		// Fetching receiver card details to credit amount in his card
 
 		try {
+			Integer serviceChargeAmount = 0;
+			Integer newAmount = amount;
 			Card senderCard = cardRepository.findById(senderCardId).get();
 			Card receiverCard = cardRepository.findById(receiverCardId).get();
 			Integer senderCardBalance = senderCard.getCardBalance();
-			if(!senderCard.getCardBankName().equals(receiverCard.getCardBankName())) {
-			if (amount > 5000) { 
-				logger.info("amount is greater than 5000");
-				logger.info("service charge will be deducted");
-				Integer extraAmount = amount - 5000;
-				Integer serviceChargeAmount = (extraAmount * 5) / 100;
-				logger.info("calculated service charged {}", serviceChargeAmount);
+			if (!senderCard.getCardBankName().equals(receiverCard.getCardBankName())) {
+				if (amount > 5000) {//6000
 
-			
+					logger.info("amount is greater than 5000");
+					logger.info("service charge will be deducted");
+					Integer extraAmount = amount - 5000;
+					serviceChargeAmount = (extraAmount * 5) / 100;
+					logger.info("calculated service charged {}", serviceChargeAmount);
 
-				amount = amount - serviceChargeAmount;
-				logger.info("Final amount after service charge deduction :: " + amount);
+					amount = amount - serviceChargeAmount;//5950
+					logger.info("Final amount after service charge deduction :: " + amount);
+				}
 			}
-			}
-			Integer senderUpdatedCardBalance = senderCardBalance - amount;
+			newAmount = amount + serviceChargeAmount;//5950+50=6000
+			Integer senderUpdatedCardBalance = senderCardBalance - newAmount;
+			logger.info("newAmount{}", newAmount);
 			senderCard.setCardBalance(senderUpdatedCardBalance);
 			cardRepository.save(senderCard);
-			logger.info(" amount deducted from sender's card successfully {}",amount);
-			
+			logger.info(" amount deducted from sender's card successfully {}", newAmount);
+
 			Integer receiverCardBalance = receiverCard.getCardBalance();
 			Integer receiverUpdatedCardBalance = receiverCardBalance + amount;
 			receiverCard.setCardBalance(receiverUpdatedCardBalance);
 			cardRepository.save(receiverCard);
-			logger.info(" amount credited to receiver's card successfully {}",amount  );
+			logger.info(" amount credited to receiver's card successfully {}", amount);
 			moneyTransferResponse = new HashMap<>(5);
 			moneyTransferResponse.put("status", "Success");
 			moneyTransferResponse.put("message", "Amount transfer success !!");
 			String uuid = txnPdf(senderCard, receiverCard, amount);
-			 saveTransactionalDetails(senderCard.getCardId(), senderCard.getCardHolderFirstName(), receiverCard.getCardId(), receiverCard.getCardHolderFirstName(), amount,
-						new Date(),"Card to card txn",uuid);
+			saveTransactionalDetails(senderCard.getCardId(), senderCard.getCardHolderFirstName(),
+					receiverCard.getCardId(), receiverCard.getCardHolderFirstName(), amount, new Date(),
+					"Card to card txn", uuid);
 			logger.info("Txn Pdf creating Successfull");
 
 		} catch (Exception e) {
@@ -284,7 +288,7 @@ public class CardService {
 	}
 
 	private void saveTransactionalDetails(Integer senderId, String senderName, Integer receiverId, String receiverName,
-			Integer amount, Date txnDate, String purpose,String uid) {
+			Integer amount, Date txnDate, String purpose, String uid) {
 
 		TxnDetails txnDetails = new TxnDetails();
 
@@ -298,7 +302,7 @@ public class CardService {
 		txnDetails.setUid(uid);
 
 		logger.info("saveTransactionalDetails {}", txnDetails);
-		logger.info("setting uid {}"+uid);
+		logger.info("setting uid {}" + uid);
 		txnRepository.save(txnDetails);
 		logger.info("Transactional details save successfully");
 

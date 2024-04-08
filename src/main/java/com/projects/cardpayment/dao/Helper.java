@@ -9,23 +9,20 @@ import com.projects.cardpayment.repository.TxnRepository;
 
 public class Helper {
 
-	private CardRepository cardRepository ;
+	private CardRepository cardRepository;
 	private TxnRepository txnRepository;
-	
+
 	public Helper(CardRepository cardRepository, TxnRepository txnRepository) {
 		this.cardRepository = cardRepository;
 		this.txnRepository = txnRepository;
 	}
-	
-	public List<Card> getAllCards()
-	{
+
+	public List<Card> getAllCards() {
 		return cardRepository.findAll();
 	}
-	
-	public List<TxnDetails> getAllTxns()
-	{
+
+	public List<TxnDetails> getAllTxns() {
 		return txnRepository.findAll();
 	}
-	
-	
+
 }

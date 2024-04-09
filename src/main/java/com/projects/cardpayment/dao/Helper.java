@@ -2,11 +2,14 @@ package com.projects.cardpayment.dao;
 
 import java.util.List;
 
+import org.springframework.stereotype.Service;
+
 import com.projects.cardpayment.entities.Card;
 import com.projects.cardpayment.entities.TxnDetails;
 import com.projects.cardpayment.repository.CardRepository;
 import com.projects.cardpayment.repository.TxnRepository;
 
+@Service
 public class Helper {
 
 	private CardRepository cardRepository;

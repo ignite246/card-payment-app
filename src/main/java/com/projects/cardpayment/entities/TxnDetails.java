@@ -14,8 +14,8 @@ import jakarta.persistence.Table;
 public class TxnDetails {
 	
 	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Integer txnId;
+	@GeneratedValue(strategy = GenerationType.AUTO)
+	private Integer id;
 	
 	@Column(nullable = true)
 	private Integer senderId; //cardId of the sender
@@ -39,14 +39,14 @@ public class TxnDetails {
 	private String purpose;
 	
 	@Column(nullable=false)
-	private String uid;
+	private String txnUUID;
 
-	public Integer getTxnId() {
-		return txnId;
+	public Integer getId() {
+		return id;
 	}
 
-	public void setTxnId(Integer txnId) {
-		this.txnId = txnId;
+	public void setId(Integer id) {
+		this.id = id;
 	}
 
 	public Integer getSenderId() {
@@ -105,28 +105,28 @@ public class TxnDetails {
 		this.purpose = purpose;
 	}
 
-	public String getUid() {
-		return uid;
+	public String getTxnUUID() {
+		return txnUUID;
 	}
 
-	public void setUid(String uid) {
-		this.uid = uid;
+	public void setTxnUUID(String txnUUID) {
+		this.txnUUID = txnUUID;
 	}
 
 	@Override
 	public String toString() {
-		return "TxnDetails [txnId=" + txnId + ", senderId=" + senderId + ", senderName=" + senderName + ", receiverId="
+		return "TxnDetails [id=" + id + ", senderId=" + senderId + ", senderName=" + senderName + ", receiverId="
 				+ receiverId + ", receiverName=" + receiverName + ", txnAmount=" + txnAmount + ", txnDate=" + txnDate
-				+ ", purpose=" + purpose + ", uid=" + uid + "]";
+				+ ", purpose=" + purpose + ", txnUUID=" + txnUUID + "]";
 	}
 
 	public TxnDetails() {
 	}
 
-	public TxnDetails(Integer txnId, Integer senderId, String senderName, Integer receiverId, String receiverName,
-			Integer txnAmount, Date txnDate, String purpose, String uid) {
+	public TxnDetails(Integer id, Integer senderId, String senderName, Integer receiverId, String receiverName,
+			Integer txnAmount, Date txnDate, String purpose, String txnUUID) {
 		super();
-		this.txnId = txnId;
+		this.id = id;
 		this.senderId = senderId;
 		this.senderName = senderName;
 		this.receiverId = receiverId;
@@ -134,9 +134,9 @@ public class TxnDetails {
 		this.txnAmount = txnAmount;
 		this.txnDate = txnDate;
 		this.purpose = purpose;
-		this.uid = uid;
+		this.txnUUID = txnUUID;
 	}
-
-		
-
+	
+	
+	
 	}	

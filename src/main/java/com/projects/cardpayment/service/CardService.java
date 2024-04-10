@@ -77,7 +77,7 @@ public class CardService {
 
 	}
 
-	public Card addMoneyToCard(Integer cardId, int amount) {
+	public String addMoneyToCard(Integer cardId, int amount) {
 		Card card = null;
 		String txnUUID = null;
 		Integer cardCurrentBalance = null;
@@ -96,10 +96,10 @@ public class CardService {
 		} catch (Exception e) {
 			logger.info("CS : Exception  {}", e.getMessage());
 		}
-		return card;
+		return txnUUID;
 	}
 
-	public Card withdrawMoneyFromCard(Integer cardId, Integer amount) {
+	public String withdrawMoneyFromCard(Integer cardId, Integer amount) {
 		Card card = null;
 		Integer cardCurrentBalance = null;
 		Integer cardNewBalance = null;
@@ -113,10 +113,12 @@ public class CardService {
 			txnUUID = txnPdf(card, null, amount);
 			saveTransactionalDetails(card.getCardId(), card.getCardHolderFirstName(), null, null, amount, txnDate,
 					"withdraw Transaction", txnUUID);
+			cardRepository.save(card);
 		} catch (FileNotFoundException | DocumentException e) {
 			logger.info(e.getMessage());
 		}
-		return cardRepository.save(card);
+		 
+		 return txnUUID;
 	}
 
 	public Map<String, String> orderPayment(Integer cardId, Integer cardCVV, String cardExpiryDate,

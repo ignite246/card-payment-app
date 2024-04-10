@@ -204,7 +204,7 @@ public class CardService {
 
 		try {
 			Integer serviceChargeAmount = 0;
-			Integer newAmount = amount;
+			Integer txnAmount = amount;
 			Card senderCard = cardRepository.findById(senderCardId).get();
 			Card receiverCard = cardRepository.findById(receiverCardId).get();
 			Integer senderCardBalance = senderCard.getCardBalance();
@@ -220,12 +220,12 @@ public class CardService {
 					logger.info("Final amount after service charge deduction :: {} ", amount);
 				}
 			}
-			newAmount = amount + serviceChargeAmount;// 5950+50=6000
-			Integer senderUpdatedCardBalance = senderCardBalance - newAmount;
-			logger.info("newAmount{}", newAmount);
+			txnAmount = amount + serviceChargeAmount;// 5950+50=6000
+			Integer senderUpdatedCardBalance = senderCardBalance - txnAmount;
+			logger.info("newAmount{}", txnAmount);
 			senderCard.setCardBalance(senderUpdatedCardBalance);
 			cardRepository.save(senderCard);
-			logger.info(" amount deducted from sender's card successfully {}", newAmount);
+			logger.info(" amount deducted from sender's card successfully {}", txnAmount);
 
 			Integer receiverCardBalance = receiverCard.getCardBalance();
 			Integer receiverUpdatedCardBalance = receiverCardBalance + amount;
@@ -235,7 +235,7 @@ public class CardService {
 			moneyTransferResponse = new HashMap<>(5);
 			moneyTransferResponse.put("status", "Success");
 			moneyTransferResponse.put("message", "Amount transfer success !!");
-			String txnUUID = txnPdf(senderCard, receiverCard, amount);
+			String txnUUID = txnPdf(senderCard, receiverCard, txnAmount);
 			saveTransactionalDetails(senderCard.getCardId(), senderCard.getCardHolderFirstName(),
 					receiverCard.getCardId(), receiverCard.getCardHolderFirstName(), amount, new Date(),
 					"Card to card txn", txnUUID);
@@ -252,7 +252,7 @@ public class CardService {
 
 	}
 
-	private String txnPdf(Card senderCard, Card receiverCard, Integer amount)
+	private String txnPdf(Card senderCard, Card receiverCard, Integer txnAmount)
 			throws FileNotFoundException, DocumentException {
 
 		Document document = new Document(PageSize.LETTER);
@@ -272,7 +272,7 @@ public class CardService {
 			Paragraph para3 = new Paragraph("Receiver CardID :: " + receiverCard.getCardId(), font);
 			document.add(para3);
 		}
-		Paragraph para4 = new Paragraph("Txn Amount :: " + "$" + amount, font);
+		Paragraph para4 = new Paragraph("Txn Amount :: " + "$" + txnAmount, font);
 		document.add(para4);
 		Paragraph para5 = new Paragraph("Txn ID :: " + uuid, font);
 		document.add(para5);

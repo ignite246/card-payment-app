@@ -124,7 +124,7 @@ public class TxnService {
 			}
 		} catch (Exception e) {
 			status = e.getMessage();
-			logger.error("TS:EXCEPTION {}", e.getMessage());
+			logger.error("TS:EXCEPTION {}", status);
 		}
 		response = new GetSmallestAmountTxnDetailsResDTO();
 		response.setTxnDetails(smallestAmtTxnDetails);

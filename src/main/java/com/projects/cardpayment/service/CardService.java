@@ -234,14 +234,19 @@ public class CardService {
 			receiverCard.setCardBalance(receiverUpdatedCardBalance);
 			cardRepository.save(receiverCard);
 			logger.info(" amount credited to receiver's card successfully {}", amount);
-			moneyTransferResponse = new HashMap<>(5);
-			moneyTransferResponse.put("status", "Success");
-			moneyTransferResponse.put("message", "Amount transfer success !!");
+			
 			String txnUUID = txnPdf(senderCard, receiverCard, txnAmount);
 			saveTransactionalDetails(senderCard.getCardId(), senderCard.getCardHolderFirstName(),
 					receiverCard.getCardId(), receiverCard.getCardHolderFirstName(), amount, new Date(),
 					"Card to card txn", txnUUID);
-			logger.info("Txn Pdf creating Successfull");
+			logger.info("Txn Pdf created Successfully");
+			
+			moneyTransferResponse = new HashMap<>(5);
+			moneyTransferResponse.put("status", "Success");
+			moneyTransferResponse.put("message", "Amount transfer success !!");
+			moneyTransferResponse.put("amount", String.valueOf(txnAmount));
+			moneyTransferResponse.put("txnUUID", txnUUID);
+			
 
 		} catch (Exception e) {
 			logger.info("EXCEPTION AT CS : {}", e.getMessage());

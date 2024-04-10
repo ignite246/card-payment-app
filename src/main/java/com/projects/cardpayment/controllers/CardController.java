@@ -154,7 +154,7 @@ public class CardController {
 
 			try {
 
-				card = cardService.addMoneyToCard(cardId, amount);
+				String txnUUID = cardService.addMoneyToCard(cardId, amount);
 
 				logger.info("{} Amount added to the card", amount);
 
@@ -165,6 +165,7 @@ public class CardController {
 				addMoneySuccessResponse.put("status", "SUCCESS");
 				addMoneySuccessResponse.put("amount", String.valueOf(amount));
 				addMoneySuccessResponse.put("message", "Money added successfully");
+				addMoneySuccessResponse.put("txnUUID", txnUUID);
 				return addMoneySuccessResponse;
 			} catch (Exception ex) {
 				Map<String, String> addMoneyFailureResponse = new HashMap<>(3);
@@ -196,13 +197,14 @@ public class CardController {
 
 		if (amount > 0) {
 			logger.info("{} amount is greater than 0. It is valid amount to proceed with the txn", amount);
-			cardService.withdrawMoneyFromCard(cardId, amount);
+			String txnUUID = cardService.withdrawMoneyFromCard(cardId, amount);
 
 			// Preparing success response
 			Map<String, String> withdrawMoneySuccessResponse = new HashMap<>();
 			withdrawMoneySuccessResponse.put("status", "SUCCESS");
 			withdrawMoneySuccessResponse.put("amount", String.valueOf(amount));
 			withdrawMoneySuccessResponse.put("message", "Money withdrawn successfully");
+			withdrawMoneySuccessResponse.put("txnUUID", txnUUID);
 			return withdrawMoneySuccessResponse;
 
 		} else {

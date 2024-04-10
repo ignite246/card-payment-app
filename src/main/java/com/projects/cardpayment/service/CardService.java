@@ -249,6 +249,7 @@ public class CardService {
 			
 
 		} catch (Exception e) {
+			
 			logger.info("EXCEPTION AT CS : {}", e.getMessage());
 			moneyTransferResponse = new HashMap<>(5);
 			moneyTransferResponse.put("status", "FAILURE");

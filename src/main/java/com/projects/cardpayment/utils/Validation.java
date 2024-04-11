@@ -43,7 +43,7 @@ public class Validation {
 				logger.info("Card Email Validation Result :: SUCCESS");
 				validationPassed = true;
 			} else {
-				logger.info(" Email Validation :: FAILED");
+				logger.info(" Email Validation:: FAILED");
 				validationPassed = false;
 			}
 		}

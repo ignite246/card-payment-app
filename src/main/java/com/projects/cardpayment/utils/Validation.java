@@ -1,11 +1,14 @@
 package com.projects.cardpayment.utils;
 
-import com.projects.cardpayment.entities.Card;
+import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import java.util.Objects;
+import com.projects.cardpayment.entities.Card;
 
 @Component
 public class Validation {
@@ -24,6 +27,23 @@ public class Validation {
             logger.info("Card Holder LastName Validation Result :: FAILED");
             validationPassed = false;
         }
+        
+              String email = card.getEmail();
+        String regex = "[^@]{5,20}[@][A-z]+[.][a-z]{3}";
+
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(email);
+
+        if (matcher.matches()) {
+        	logger.info("Card Email Validation Result :: SUCCESS");
+        	validationPassed=true;
+        	
+        } else {
+        	logger.info("CarD Email Validation Result :: FAILED");
+        	validationPassed=false;
+        	
+        }
+    
 
         return validationPassed;
     }

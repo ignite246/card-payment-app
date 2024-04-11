@@ -43,6 +43,9 @@ public class Card {
 	@Column(nullable = false)
 	@UpdateTimestamp
 	private Date cardLastUpdatedOn;
+	
+	@Column(nullable = false)
+	private String email;
 
 	public Integer getCardId() {
 		return cardId;
@@ -124,19 +127,44 @@ public class Card {
 		this.cardLastUpdatedOn = cardLastUpdatedOn;
 	}
 
+	public String getEmail() {
+		return email;
+	}
+
+	public void setEmail(String email) {
+		this.email = email;
+	}
+
 	@Override
 	public String toString() {
-		return "Card [" +
-				"cardId=" + cardId +
-				", cardCVVNumber=" + cardCVVNumber +
-				", cardExpiryDate='" + cardExpiryDate + '\'' +
-				", cardHolderId=" + cardHolderId +
-				", cardHolderFirstName='" + cardHolderFirstName + '\'' +
-				", cardHolderLastName='" + cardHolderLastName + '\'' +
-				", cardBalance=" + cardBalance +
-				", cardBankName='" + cardBankName + '\'' +
-				", cardCreatedOn=" + cardCreatedOn +
-				", cardLastUpdatedOn=" + cardLastUpdatedOn +
-				']';
+		return "Card [cardId=" + cardId + ", cardCVVNumber=" + cardCVVNumber + ", cardExpiryDate=" + cardExpiryDate
+				+ ", cardHolderId=" + cardHolderId + ", cardHolderFirstName=" + cardHolderFirstName
+				+ ", cardHolderLastName=" + cardHolderLastName + ", cardBalance=" + cardBalance + ", cardBankName="
+				+ cardBankName + ", cardCreatedOn=" + cardCreatedOn + ", cardLastUpdatedOn=" + cardLastUpdatedOn
+				+ ", email=" + email + "]";
 	}
+
+	public Card() {
+		super();
+		// TODO Auto-generated constructor stub
+	}
+
+	public Card(Integer cardId, Integer cardCVVNumber, String cardExpiryDate, Integer cardHolderId,
+			String cardHolderFirstName, String cardHolderLastName, Integer cardBalance, String cardBankName,
+			Date cardCreatedOn, Date cardLastUpdatedOn, String email) {
+		super();
+		this.cardId = cardId;
+		this.cardCVVNumber = cardCVVNumber;
+		this.cardExpiryDate = cardExpiryDate;
+		this.cardHolderId = cardHolderId;
+		this.cardHolderFirstName = cardHolderFirstName;
+		this.cardHolderLastName = cardHolderLastName;
+		this.cardBalance = cardBalance;
+		this.cardBankName = cardBankName;
+		this.cardCreatedOn = cardCreatedOn;
+		this.cardLastUpdatedOn = cardLastUpdatedOn;
+		this.email = email;
+	}
+	
+	
 }

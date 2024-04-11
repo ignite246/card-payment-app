@@ -203,13 +203,14 @@ public class CardService {
 		Map<String, String> moneyTransferResponse = null;
 
 		// Fetching receiver card details to credit amount in his card
-
+		
 		try {
 			Integer serviceChargeAmount = 0;
 			Integer txnAmount = amount;
 			Card senderCard = cardRepository.findById(senderCardId).get();
 			Card receiverCard = cardRepository.findById(receiverCardId).get();
 			Integer senderCardBalance = senderCard.getCardBalance();
+		
 			if (!senderCard.getCardBankName().equals(receiverCard.getCardBankName())) {
 				if (amount > 5000) {// 6000
 					logger.info("amount is greater than 5000");
@@ -240,7 +241,7 @@ public class CardService {
 					receiverCard.getCardId(), receiverCard.getCardHolderFirstName(), amount, new Date(),
 					"Card to card txn", txnUUID);
 			logger.info("Txn Pdf created Successfully");
-			
+			logger.info(" amount deducted from sender's card successfully {}", txnAmount);
 			moneyTransferResponse = new HashMap<>(5);
 			moneyTransferResponse.put("status", "Success");
 			moneyTransferResponse.put("message", "Amount transfer success !!");

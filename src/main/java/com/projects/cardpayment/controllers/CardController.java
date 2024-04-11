@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.projects.cardpayment.constant.CardPaymentConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -118,19 +119,16 @@ public class CardController {
 		try {
 
 			cardService.deleteById(cardId);
+			logger.info("card with id {} deleted successfully",cardId);
 			deleteCardAPIResponse.put("status", "SUCCESS");
-			deleteCardAPIResponse.put("statusCode", "7000"); // Project specific status code //Not a standard HTTP
-																// Status Code //Only project wale know ish code ka
-																// meaning
+			deleteCardAPIResponse.put("statusCode", "7000");
 			deleteCardAPIResponse.put("message", "Card deleted successfully");
 			deleteCardAPIResponse.put("cardId", String.valueOf(cardId));
 		} catch (Exception ex) {
 			logger.error("Exception occurred while deleting the card of the id :: {} ", cardId);
 			logger.error("Exception reason ::{} ", ex.getMessage());
 			deleteCardAPIResponse.put("status", "FAILURE");
-			deleteCardAPIResponse.put("statusCode", "8000"); // Project specific status code //Not a standard HTTP
-																// Status Code //Only project wale know ish code ka
-																// meaning
+			deleteCardAPIResponse.put("statusCode", "8000");
 			deleteCardAPIResponse.put("message", "Card could not be deleted");
 			deleteCardAPIResponse.put("cardId", String.valueOf(cardId));
 			deleteCardAPIResponse.put("reason", "Card ID does not exist");
@@ -153,12 +151,8 @@ public class CardController {
 			logger.info("Amount is greater than 0. Its a valid amount for the txn");
 
 			try {
-
 				String txnUUID = cardService.addMoneyToCard(cardId, amount);
-
 				logger.info("{} Amount added to the card", amount);
-
-				// Logic to store transaction details
 
 				// now generating/preparing response for the API in case of SUCCESS
 				Map<String, String> addMoneySuccessResponse = new HashMap<>(3);
@@ -260,7 +254,7 @@ public class CardController {
 		logger.info("Amount to be transfer :: {}", amount);
 
 		if (amount >= minimumTxnAmount) {
-			logger.info(" Amount is or more. So its an valid amount to process with txn {}{}", amount,
+			logger.info("{} Amount is {} or more. So its an valid amount to process with txn", amount,
 					minimumTxnAmount);
 			// Fetching sender card details to deduct amount from his card
 			moneyTransfer = cardService.moneyTransfer(senderCardId, receiverCardId, amount);
@@ -270,8 +264,8 @@ public class CardController {
 			logger.info("Amount is less than 100. So its an invalid amount to process the txn {}", amount);
 			// Preparing response in case of success
 			moneyTransfer = new HashMap<>(5);
-			moneyTransfer.put("status", "FAILURE");
-			moneyTransfer.put("message", "Amount transfer failed !!");
+			moneyTransfer.put(CardPaymentConstants.STATUS, CardPaymentConstants.FAILURE);
+			moneyTransfer.put(CardPaymentConstants.STATUS_MSG, "Amount transfer failed !!");
 			moneyTransfer.put("reason", "Minimum txn amount must be 100");
 		}
 		return moneyTransfer;

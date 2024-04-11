@@ -27,7 +27,6 @@ import com.itextpdf.text.FontFactory;
 import com.itextpdf.text.PageSize;
 import com.itextpdf.text.Paragraph;
 import com.itextpdf.text.pdf.PdfWriter;
-import com.projects.cardpayment.controllers.CardController;
 import com.projects.cardpayment.entities.Card;
 import com.projects.cardpayment.entities.TxnDetails;
 import com.projects.cardpayment.repository.CardRepository;
@@ -36,7 +35,7 @@ import com.projects.cardpayment.repository.TxnRepository;
 @Service
 public class CardService {
 
-	Logger logger = LoggerFactory.getLogger(CardController.class);
+	Logger logger = LoggerFactory.getLogger(CardService.class);
 
 	@Autowired
 	private CardRepository cardRepository;
@@ -78,9 +77,9 @@ public class CardService {
 
 	}
 
-	public Card addMoneyToCard(Integer cardId, int amount) {
+	public String addMoneyToCard(Integer cardId, int amount) {
 		Card card = null;
-		String uuid = null;
+		String txnUUID = null;
 		Integer cardCurrentBalance = null;
 		Integer cardNewBalance = null;
 		try {
@@ -91,39 +90,41 @@ public class CardService {
 			card = cardRepository.save(card);
 			logger.info("card {}", card);
 			Date txnDate = new Date();
-			uuid = txnPdf(null, card, amount);
+			txnUUID = txnPdf(null, card, amount);
 			saveTransactionalDetails(null, null, card.getCardId(), card.getCardHolderFirstName(), amount, txnDate,
-					"Amount Deposited", uuid);
+					"Amount Deposited", txnUUID);
 		} catch (Exception e) {
 			logger.info("CS : Exception  {}", e.getMessage());
 		}
-		return card;
+		return txnUUID;
 	}
 
-	public Card withdrawMoneyFromCard(Integer cardId, Integer amount) {
+	public String withdrawMoneyFromCard(Integer cardId, Integer amount) {
 		Card card = null;
 		Integer cardCurrentBalance = null;
 		Integer cardNewBalance = null;
-		String uuid = null;
+		String txnUUID = null;
 		card = cardRepository.findById(cardId).get();
 		cardCurrentBalance = card.getCardBalance();
 		cardNewBalance = cardCurrentBalance - amount;
 		card.setCardBalance(cardNewBalance);
 		Date txnDate = new Date();
 		try {
-			uuid = txnPdf(card, null, amount);
+			txnUUID = txnPdf(card, null, amount);
 			saveTransactionalDetails(card.getCardId(), card.getCardHolderFirstName(), null, null, amount, txnDate,
-					"withdraw Transaction", uuid);
+					"withdraw Transaction", txnUUID);
+			cardRepository.save(card);
 		} catch (FileNotFoundException | DocumentException e) {
 			logger.info(e.getMessage());
 		}
-		return cardRepository.save(card);
+		 
+		 return txnUUID;
 	}
 
 	public Map<String, String> orderPayment(Integer cardId, Integer cardCVV, String cardExpiryDate,
 			Integer amountToBePaid) {
 		Card card = null;
-		String uuid = null;
+		String txnUUID = null;
 		card = cardRepository.findById(cardId).get();
 		Integer cardCurrentBalance = card.getCardBalance();
 		if (cardCurrentBalance >= amountToBePaid) {
@@ -131,8 +132,8 @@ public class CardService {
 
 			Integer cardCVVInDB = card.getCardCVVNumber();
 			String cardExpiryDateInDB = card.getCardExpiryDate();
-			logger.info("cardCVVInDB :: " + cardCVVInDB);
-			logger.info("cardExpiryDateInDB :: " + cardExpiryDateInDB);
+			logger.info("cardCVVInDB :: {} ", cardCVVInDB);
+			logger.info("cardExpiryDateInDB :: {}", cardExpiryDateInDB);
 
 			// Need to do the Card validation before proceeding with the payment
 			if (Objects.equals(cardCVV, cardCVVInDB) && cardExpiryDate.equals(cardExpiryDateInDB)) {
@@ -151,12 +152,12 @@ public class CardService {
 				orderPaymentSuccessResponse.put("txnId", String.valueOf(UUID.randomUUID()));
 
 				Date txnDate = new Date();
-				
+
 				try {
-					 uuid = txnPdf(card, null, amountToBePaid);
-					 logger.info("uuid generated : {}",uuid);
-					 saveTransactionalDetails(card.getCardId(), card.getCardHolderFirstName(), null, null, amountToBePaid,
-								txnDate,"Shopping Transaction",uuid);
+					txnUUID = txnPdf(card, null, amountToBePaid);
+					logger.info("uuid generated : {}", txnUUID);
+					saveTransactionalDetails(card.getCardId(), card.getCardHolderFirstName(), null, null,
+							amountToBePaid, txnDate, "Shopping Transaction", txnUUID);
 				} catch (FileNotFoundException | DocumentException e) {
 					logger.info(e.getMessage());
 				}
@@ -202,42 +203,51 @@ public class CardService {
 		Map<String, String> moneyTransferResponse = null;
 
 		// Fetching receiver card details to credit amount in his card
-
+		
 		try {
+			Integer serviceChargeAmount = 0;
+			Integer txnAmount = amount;
 			Card senderCard = cardRepository.findById(senderCardId).get();
 			Card receiverCard = cardRepository.findById(receiverCardId).get();
 			Integer senderCardBalance = senderCard.getCardBalance();
-			if(!senderCard.getCardBankName().equals(receiverCard.getCardBankName())) {
-			if (amount > 5000) { 
-				logger.info("amount is greater than 5000");
-				logger.info("service charge will be deducted");
-				Integer extraAmount = amount - 5000;
-				Integer serviceChargeAmount = (extraAmount * 5) / 100;
-				logger.info("calculated service charged {}", serviceChargeAmount);
+		
+			if (!senderCard.getCardBankName().equals(receiverCard.getCardBankName())) {
+				if (amount > 5000) {// 6000
+					logger.info("amount is greater than 5000");
+					logger.info("service charge will be deducted");
+					Integer extraAmount = amount - 5000;
+					serviceChargeAmount = (extraAmount * 5) / 100;
+					logger.info("calculated service charged {}", serviceChargeAmount);
 
-			
-
-				amount = amount - serviceChargeAmount;
-				logger.info("Final amount after service charge deduction :: " + amount);
+					amount = amount - serviceChargeAmount;// 5950
+					logger.info("Final amount after service charge deduction :: {} ", amount);
+				}
 			}
-			}
-			Integer senderUpdatedCardBalance = senderCardBalance - amount;
+			txnAmount = amount + serviceChargeAmount;// 5950+50=6000
+			Integer senderUpdatedCardBalance = senderCardBalance - txnAmount;
+			logger.info("newAmount{}", txnAmount);
 			senderCard.setCardBalance(senderUpdatedCardBalance);
 			cardRepository.save(senderCard);
-			logger.info(" amount deducted from sender's card successfully {}",amount);
-			
+			logger.info(" amount deducted from sender's card successfully {}", txnAmount);
+
 			Integer receiverCardBalance = receiverCard.getCardBalance();
 			Integer receiverUpdatedCardBalance = receiverCardBalance + amount;
 			receiverCard.setCardBalance(receiverUpdatedCardBalance);
 			cardRepository.save(receiverCard);
-			logger.info(" amount credited to receiver's card successfully {}",amount  );
+			logger.info(" amount credited to receiver's card successfully {}", amount);
+			
+			String txnUUID = txnPdf(senderCard, receiverCard, txnAmount);
+			saveTransactionalDetails(senderCard.getCardId(), senderCard.getCardHolderFirstName(),
+					receiverCard.getCardId(), receiverCard.getCardHolderFirstName(), amount, new Date(),
+					"Card to card txn", txnUUID);
+			logger.info("Txn Pdf created Successfully");
+			logger.info(" amount deducted from sender's card successfully {}", txnAmount);
 			moneyTransferResponse = new HashMap<>(5);
 			moneyTransferResponse.put("status", "Success");
 			moneyTransferResponse.put("message", "Amount transfer success !!");
-			String uuid = txnPdf(senderCard, receiverCard, amount);
-			 saveTransactionalDetails(senderCard.getCardId(), senderCard.getCardHolderFirstName(), receiverCard.getCardId(), receiverCard.getCardHolderFirstName(), amount,
-						new Date(),"Card to card txn",uuid);
-			logger.info("Txn Pdf creating Successfull");
+			moneyTransferResponse.put("amount", String.valueOf(txnAmount));
+			moneyTransferResponse.put("txnUUID", txnUUID);
+			
 
 		} catch (Exception e) {
 			logger.info("EXCEPTION AT CS : {}", e.getMessage());
@@ -250,7 +260,7 @@ public class CardService {
 
 	}
 
-	private String txnPdf(Card senderCard, Card receiverCard, Integer amount)
+	private String txnPdf(Card senderCard, Card receiverCard, Integer txnAmount)
 			throws FileNotFoundException, DocumentException {
 
 		Document document = new Document(PageSize.LETTER);
@@ -270,7 +280,7 @@ public class CardService {
 			Paragraph para3 = new Paragraph("Receiver CardID :: " + receiverCard.getCardId(), font);
 			document.add(para3);
 		}
-		Paragraph para4 = new Paragraph("Txn Amount :: " + "$" + amount, font);
+		Paragraph para4 = new Paragraph("Txn Amount :: " + "$" + txnAmount, font);
 		document.add(para4);
 		Paragraph para5 = new Paragraph("Txn ID :: " + uuid, font);
 		document.add(para5);
@@ -284,7 +294,7 @@ public class CardService {
 	}
 
 	private void saveTransactionalDetails(Integer senderId, String senderName, Integer receiverId, String receiverName,
-			Integer amount, Date txnDate, String purpose,String uid) {
+			Integer amount, Date txnDate, String purpose, String txnUUID) {
 
 		TxnDetails txnDetails = new TxnDetails();
 
@@ -295,10 +305,10 @@ public class CardService {
 		txnDetails.setTxnAmount(amount);
 		txnDetails.setTxnDate(txnDate);
 		txnDetails.setPurpose(purpose);
-		txnDetails.setUid(uid);
+		txnDetails.setTxnUUID(txnUUID);
 
 		logger.info("saveTransactionalDetails {}", txnDetails);
-		logger.info("setting uid {}"+uid);
+		logger.info("setting txnUUID {}", txnUUID);
 		txnRepository.save(txnDetails);
 		logger.info("Transactional details save successfully");
 
@@ -331,7 +341,6 @@ public class CardService {
 	}
 
 	public Integer getCVVNumberByCardId(Integer cardId) {
-		// TODO Auto-generated method stub
 		Integer cardCVVNo = 0;
 		Card card = cardRepository.findById(cardId).get();
 		cardCVVNo = card.getCardCVVNumber();
@@ -342,12 +351,16 @@ public class CardService {
 
 	public List<Card> getListOfCardThatHaveBalanceInBetween(Integer lowerAmount, Integer upperAmount) {
 		List<Card> allCards = null;
-		List<Card> listOfCardBalance = null;
+		List<Card> listOfCardBalance = new ArrayList<>();
 		Card card = null;
 		allCards = cardRepository.findAll();
+
+		logger.info("allCards {}", allCards);
+
 		for (int i = 0; i < allCards.size(); i++) {
 			card = allCards.get(i);
 			Integer cardBalance = card.getCardBalance();
+			logger.info("card Balance*** {}", cardBalance);
 
 			if (cardBalance >= lowerAmount && cardBalance <= upperAmount) {
 
@@ -365,7 +378,7 @@ public class CardService {
 		String cardBankName = null;
 
 		allCards = cardRepository.findAll();
-		listOfCards = new ArrayList<Card>();
+		listOfCards = new ArrayList<>();
 		for (int i = 0; i < allCards.size(); i++) {
 			card = allCards.get(i);
 			cardBankName = card.getCardBankName();

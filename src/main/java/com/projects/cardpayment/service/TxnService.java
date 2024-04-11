@@ -7,8 +7,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.projects.cardpayment.dao.Helper;
 import com.projects.cardpayment.entities.TxnDetails;
-import com.projects.cardpayment.repository.TxnRepository;
 import com.projects.cardpayment.response.dto.GetLargestAmountTxnDetailsResDTO;
 import com.projects.cardpayment.response.dto.GetSmallestAmountTxnDetailsResDTO;
 import com.projects.cardpayment.response.dto.TxnDetailsByCardIdResDTO;
@@ -17,16 +17,21 @@ import com.projects.cardpayment.response.dto.TxnDetailsByCardIdResDTO;
 public class TxnService {
 
 	Logger logger = LoggerFactory.getLogger(TxnService.class);
-
+	
+	private Helper helper;
+	
+	
 	@Autowired
-	private TxnRepository txnRepo;
+	public TxnService(  Helper helper) {
+		this.helper = helper;
+	}
 
 	public GetLargestAmountTxnDetailsResDTO getTransactionDetailsOfTheLargestAmount(Integer cardId) {
 		GetLargestAmountTxnDetailsResDTO response = null;
 		TxnDetails txnDetails2 = null;
 		TxnDetails largestAmtTxn = null;
 		Integer txnAmount = null;
-		List<TxnDetails> txnDetailsList = txnRepo.findBySenderId(cardId);
+		List<TxnDetails> txnDetailsList = helper.getBySenderId(cardId);
 		logger.info("transaction details {}", txnDetailsList);
 		Integer largestAmount = 0;
 
@@ -61,7 +66,7 @@ public class TxnService {
 		TxnDetailsByCardIdResDTO response = null;
 
 		try {
-			List<TxnDetails> txnDetails = txnRepo.findBySenderId(cardId);
+			List<TxnDetails> txnDetails = helper.getBySenderId(cardId);
 			logger.info("transaction details {}", txnDetails);
 			response = new TxnDetailsByCardIdResDTO();
 			response.setStatus("Success");
@@ -89,7 +94,7 @@ public class TxnService {
 			status = "failure";
 			code = "7000";
 
-			List<TxnDetails> txnDetailsList = txnRepo.findBySenderId(cardId);
+			List<TxnDetails> txnDetailsList = helper.getBySenderId(cardId);
 			logger.info("TS:transaction details {}", txnDetailsList);
 			
 			if(!(txnDetailsList ==null || txnDetailsList.size()<=0))
@@ -119,7 +124,7 @@ public class TxnService {
 			}
 		} catch (Exception e) {
 			status = e.getMessage();
-			logger.error("TS:EXCEPTION {}", e.getMessage());
+			logger.error("TS:EXCEPTION {}", status);
 		}
 		response = new GetSmallestAmountTxnDetailsResDTO();
 		response.setTxnDetails(smallestAmtTxnDetails);

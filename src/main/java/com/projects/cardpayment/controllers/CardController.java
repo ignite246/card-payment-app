@@ -63,17 +63,15 @@ public class CardController {
 			Card card2 = cardService.createCard(card);
 
 			// got response from service layer
-			createCardResponse.put("status", "SUCCESS");
+			createCardResponse.put(CardPaymentConstants.STATUS, CardPaymentConstants.SUCCESS);
 			createCardResponse.put("cardId", String.valueOf(card2.getCardId()));
 			createCardResponse.put("message", "Card created successfully");
 		} else {
-			createCardResponse.put("status", "FAILURE");
+			createCardResponse.put(CardPaymentConstants.STATUS, CardPaymentConstants.FAILURE);
 			createCardResponse.put("message", "Card creation failed");
 			createCardResponse.put("reason", "Invalid card creation request body");
 		}
-
 		return createCardResponse;
-
 	}
 
 	@GetMapping("/get-all-cards")
@@ -94,14 +92,14 @@ public class CardController {
 		try {
 
 			Card foundCard = cardService.findCardById(cardId);
-			response.setStatusMessage("SUCCESS");
+			response.setStatusMessage(CardPaymentConstants.SUCCESS);
 			response.setStatusCode(7001);
 			response.setCard(foundCard);
 
 		} catch (Exception ex) {
 			logger.error("Exception occurred while finding the card of the id :: {}", cardId);
 			logger.error("Exception reason :: {} ", ex.getMessage());
-			response.setStatusMessage("FAILURE");
+			response.setStatusMessage(CardPaymentConstants.FAILURE);
 			response.setStatusCode(8005); // Project specific status code
 			response.setCard(null);
 		}
@@ -119,19 +117,19 @@ public class CardController {
 		try {
 
 			cardService.deleteById(cardId);
-			logger.info("card with id {} deleted successfully",cardId);
-			deleteCardAPIResponse.put("status", "SUCCESS");
-			deleteCardAPIResponse.put("statusCode", "7000");
-			deleteCardAPIResponse.put("message", "Card deleted successfully");
+			logger.info("card with id {} deleted successfully", cardId);
+			deleteCardAPIResponse.put(CardPaymentConstants.STATUS, CardPaymentConstants.SUCCESS);
+			deleteCardAPIResponse.put(CardPaymentConstants.STATUS_CODE, CardPaymentConstants.SUCCESS_STATUS_200);
+			deleteCardAPIResponse.put(CardPaymentConstants.STATUS_MSG, "Card deleted successfully");
 			deleteCardAPIResponse.put("cardId", String.valueOf(cardId));
 		} catch (Exception ex) {
 			logger.error("Exception occurred while deleting the card of the id :: {} ", cardId);
 			logger.error("Exception reason ::{} ", ex.getMessage());
-			deleteCardAPIResponse.put("status", "FAILURE");
-			deleteCardAPIResponse.put("statusCode", "8000");
-			deleteCardAPIResponse.put("message", "Card could not be deleted");
+			deleteCardAPIResponse.put(CardPaymentConstants.STATUS, CardPaymentConstants.FAILURE);
+			deleteCardAPIResponse.put(CardPaymentConstants.STATUS_CODE, CardPaymentConstants.FAILURE_STATUS_500);
+			deleteCardAPIResponse.put(CardPaymentConstants.STATUS_MSG, "Card could not be deleted");
 			deleteCardAPIResponse.put("cardId", String.valueOf(cardId));
-			deleteCardAPIResponse.put("reason", "Card ID does not exist");
+			deleteCardAPIResponse.put(CardPaymentConstants.REASON, "Card ID does not exist");
 		}
 
 		logger.info("deleteACardById API Response :: {} ", deleteCardAPIResponse);
@@ -220,7 +218,7 @@ public class CardController {
 			@RequestParam("amount") Integer amountToBePaid) {
 		Map<String, String> orderPayment = null;
 		logger.info("====== orderPayment :: Input Received ====");
-		logger.info("Card ID :: {}" , cardId);
+		logger.info("Card ID :: {}", cardId);
 		logger.info("Card CVV :: {}", cardCVV);
 		logger.info("Card Expiry Date :: {}", cardExpiryDate);
 		logger.info("Amount to be paid :: {}", amountToBePaid);

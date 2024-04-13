@@ -154,17 +154,17 @@ public class CardController {
 
 				// now generating/preparing response for the API in case of SUCCESS
 				Map<String, String> addMoneySuccessResponse = new HashMap<>(3);
-				addMoneySuccessResponse.put("status", "SUCCESS");
+				addMoneySuccessResponse.put(CardPaymentConstants.STATUS, CardPaymentConstants.SUCCESS);
 				addMoneySuccessResponse.put("amount", String.valueOf(amount));
-				addMoneySuccessResponse.put("message", "Money added successfully");
+				addMoneySuccessResponse.put(CardPaymentConstants.STATUS_MSG, "Money added successfully");
 				addMoneySuccessResponse.put("txnUUID", txnUUID);
 				return addMoneySuccessResponse;
 			} catch (Exception ex) {
 				Map<String, String> addMoneyFailureResponse = new HashMap<>(3);
-				addMoneyFailureResponse.put("status", "FAILURE");
+				addMoneyFailureResponse.put(CardPaymentConstants.STATUS,CardPaymentConstants.FAILURE);
 				addMoneyFailureResponse.put("amount", String.valueOf(amount));
-				addMoneyFailureResponse.put("message", "Money could not be added successfully");
-				addMoneyFailureResponse.put("reason", "Card Id does not exist");
+				addMoneyFailureResponse.put(CardPaymentConstants.STATUS_MSG, "Money could not be added successfully");
+				addMoneyFailureResponse.put(CardPaymentConstants.REASON, "Card Id does not exist");
 				return addMoneyFailureResponse;
 			}
 		} else {
@@ -172,9 +172,9 @@ public class CardController {
 
 			// now generating/preparing response for the API in case of FAILURE
 			Map<String, String> addMoneyResponseFailure = new HashMap<>(3);
-			addMoneyResponseFailure.put("status", "FAILURE");
+			addMoneyResponseFailure.put(CardPaymentConstants.STATUS,CardPaymentConstants.FAILURE);
 			addMoneyResponseFailure.put("amount", String.valueOf(amount));
-			addMoneyResponseFailure.put("message", "Money could not be added successfully");
+			addMoneyResponseFailure.put(CardPaymentConstants.STATUS_MSG, "Money could not be added successfully");
 			return addMoneyResponseFailure;
 		}
 
@@ -193,9 +193,9 @@ public class CardController {
 
 			// Preparing success response
 			Map<String, String> withdrawMoneySuccessResponse = new HashMap<>();
-			withdrawMoneySuccessResponse.put("status", "SUCCESS");
+			withdrawMoneySuccessResponse.put(CardPaymentConstants.STATUS,CardPaymentConstants.SUCCESS);
 			withdrawMoneySuccessResponse.put("amount", String.valueOf(amount));
-			withdrawMoneySuccessResponse.put("message", "Money withdrawn successfully");
+			withdrawMoneySuccessResponse.put(CardPaymentConstants.STATUS_MSG, "Money withdrawn successfully");
 			withdrawMoneySuccessResponse.put("txnUUID", txnUUID);
 			return withdrawMoneySuccessResponse;
 
@@ -203,10 +203,10 @@ public class CardController {
 			logger.info("{} amount is 0 or less. It is invalid amount to proceed with the txn ", amount);
 			// Preparing Failure response
 			Map<String, String> withdrawMoneyFailureResponse = new HashMap<>();
-			withdrawMoneyFailureResponse.put("status", "FAILURE");
+			withdrawMoneyFailureResponse.put(CardPaymentConstants.STATUS,CardPaymentConstants.FAILURE);
 			withdrawMoneyFailureResponse.put("amount", String.valueOf(amount));
-			withdrawMoneyFailureResponse.put("message", "Money withdrawn failed");
-			withdrawMoneyFailureResponse.put("reason", "Invalid amount");
+			withdrawMoneyFailureResponse.put(CardPaymentConstants.STATUS_MSG, "Money withdrawn failed");
+			withdrawMoneyFailureResponse.put(CardPaymentConstants.REASON, "Invalid amount");
 			return withdrawMoneyFailureResponse;
 		}
 
@@ -232,8 +232,8 @@ public class CardController {
 		} else {
 			logger.info("amount is 0 or less. It is invalid amount to proceed with the txn {}", amountToBePaid);
 			orderPayment = new HashMap<>();
-			orderPayment.put("status", "FAILURE");
-			orderPayment.put("reason", "Invalid txn amount");
+			orderPayment.put(CardPaymentConstants.STATUS,CardPaymentConstants.FAILURE);
+			orderPayment.put(CardPaymentConstants.REASON, "Invalid txn amount");
 			return orderPayment;
 		}
 		return orderPayment;
@@ -325,10 +325,10 @@ public class CardController {
 			}
 			getCardBalanceInBetweenResDTO = new GetCardBalanceInBetweenResDTO();
 			if (listOfCardBalance == null || listOfCardBalance.isEmpty()) {
-				getCardBalanceInBetweenResDTO.setStatus("Failure");
+				getCardBalanceInBetweenResDTO.setStatus(CardPaymentConstants.FAILURE);
 				getCardBalanceInBetweenResDTO.setStatusCode("1");// frontend team will have mapping as No Card Found
 			} else {
-				getCardBalanceInBetweenResDTO.setStatus("Success");
+				getCardBalanceInBetweenResDTO.setStatus(CardPaymentConstants.SUCCESS);
 				getCardBalanceInBetweenResDTO.setStatusCode("0");
 				getCardBalanceInBetweenResDTO.setCardList(listOfCardBalance);
 
@@ -351,10 +351,10 @@ public class CardController {
 				cardsByBankResDTO = new CardsByBankResDTO();
 
 				if (cardsByBankName == null || cardsByBankName.isEmpty()) {
-					cardsByBankResDTO.setStatus("Failure");
+					cardsByBankResDTO.setStatus(CardPaymentConstants.FAILURE);
 					cardsByBankResDTO.setStatusCode("7000");// frontend team will have mapping as No Card Found
 				} else {
-					cardsByBankResDTO.setStatus("Success");
+					cardsByBankResDTO.setStatus(CardPaymentConstants.SUCCESS);
 					cardsByBankResDTO.setStatusCode("8000");
 					cardsByBankResDTO.setCardList(cardsByBankName);
 				}

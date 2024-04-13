@@ -32,6 +32,8 @@ import com.projects.cardpayment.entities.Card;
 import com.projects.cardpayment.entities.TxnDetails;
 import com.projects.cardpayment.repository.CardRepository;
 import com.projects.cardpayment.repository.TxnRepository;
+import com.projects.cardpayment.utils.mailservice.MailService;
+import com.projects.cardpayment.utils.mailservice.MailStructure;
 
 @Service
 public class CardService {
@@ -43,6 +45,9 @@ public class CardService {
 
 	@Autowired
 	private TxnRepository txnRepository;
+
+	@Autowired
+	private MailService mailService;
 
 	public Card createCard(Card card) {
 
@@ -90,8 +95,17 @@ public class CardService {
 			logger.info("card {}", card);
 			Date txnDate = new Date();
 			txnUUID = generateTxnReceiptPdf(null, card, amount);
-			saveTransactionalDetails(card.getCardId(), card.getCardHolderFirstName(), card.getCardId(), card.getCardHolderFirstName(), amount, txnDate,
-					CardPaymentConstants.SELF_DEPOSIT, txnUUID);
+			saveTransactionalDetails(card.getCardId(), card.getCardHolderFirstName(), card.getCardId(),
+					card.getCardHolderFirstName(), amount, txnDate, CardPaymentConstants.SELF_DEPOSIT, txnUUID);
+
+			// we will also send a mail to this card holder
+			MailStructure mailStructure = new MailStructure();
+			mailStructure.setSubject("Add Money To Card");
+			mailStructure.setMessage(amount + " has been added to your card successfully with txnId :: " + txnUUID);
+
+			mailService.sendEmail(mailStructure, card.getEmail());
+			logger.info("Mail has been send to {} Successfully.", card.getEmail());
+
 		} catch (Exception e) {
 			logger.info("CS : Exception  {}", e.getMessage());
 		}
@@ -110,13 +124,21 @@ public class CardService {
 		Date txnDate = new Date();
 		try {
 			txnUUID = generateTxnReceiptPdf(card, null, amount);
-			saveTransactionalDetails(card.getCardId(), card.getCardHolderFirstName(), card.getCardId(), card.getCardHolderFirstName(), amount, txnDate,
-					CardPaymentConstants.SELF_WITHDRAWAL, txnUUID);
+			saveTransactionalDetails(card.getCardId(), card.getCardHolderFirstName(), card.getCardId(),
+					card.getCardHolderFirstName(), amount, txnDate, CardPaymentConstants.SELF_WITHDRAWAL, txnUUID);
 			cardRepository.save(card);
+
+			MailStructure mailStructure = new MailStructure();
+			mailStructure.setSubject("WithDrawal money from Card");
+			mailStructure
+					.setMessage(amount + " has been withdrawal to your card successfully with txnId :: " + txnUUID);
+
+			mailService.sendEmail(mailStructure, card.getEmail());
+			logger.info("Mail has been send to {} Successfully.", card.getEmail());
 		} catch (FileNotFoundException | DocumentException e) {
 			logger.error(e.getMessage());
 		}
-		 return txnUUID;
+		return txnUUID;
 	}
 
 	public Map<String, String> orderPayment(Integer cardId, Integer cardCVV, String cardExpiryDate,
@@ -156,6 +178,15 @@ public class CardService {
 					logger.info("uuid generated : {}", txnUUID);
 					saveTransactionalDetails(card.getCardId(), card.getCardHolderFirstName(), 0, "ECOMMERCE_APP",
 							amountToBePaid, txnDate, CardPaymentConstants.ORDER_PAYMENT, txnUUID);
+
+					MailStructure mailStructure = new MailStructure();
+					mailStructure.setSubject("Order Payment from Card");
+					mailStructure.setMessage(amountToBePaid
+							+ " has been deducted(order payment) to your card successfully with txnId :: " + txnUUID);
+
+					mailService.sendEmail(mailStructure, card.getEmail());
+					logger.info("Mail has been send to {} Successfully.", card.getEmail());
+
 				} catch (FileNotFoundException | DocumentException e) {
 					logger.info(e.getMessage());
 				}
@@ -198,14 +229,14 @@ public class CardService {
 		logger.info("senderCardId :: {}, receiverCardId :: {}, amount :: {}", senderCardId, receiverCardId, amount);
 
 		Map<String, String> moneyTransferResponse = null;
-		
+
 		try {
 			Integer serviceChargeAmount = 0;
 			Integer txnAmount = amount;
 			Card senderCard = cardRepository.findById(senderCardId).get();
 			Card receiverCard = cardRepository.findById(receiverCardId).get();
 			Integer senderCardBalance = senderCard.getCardBalance();
-		
+
 			if (!senderCard.getCardBankName().equals(receiverCard.getCardBankName())) {
 				if (amount > 5000) {
 					logger.info("amount is greater than 5000");
@@ -230,19 +261,36 @@ public class CardService {
 			receiverCard.setCardBalance(receiverUpdatedCardBalance);
 			cardRepository.save(receiverCard);
 			logger.info(" amount credited to receiver's card successfully {}", amount);
-			
+
 			String txnUUID = generateTxnReceiptPdf(senderCard, receiverCard, txnAmount);
 			saveTransactionalDetails(senderCard.getCardId(), senderCard.getCardHolderFirstName(),
 					receiverCard.getCardId(), receiverCard.getCardHolderFirstName(), amount, new Date(),
 					CardPaymentConstants.CARD_2_CARD_MONEY_TRANSFER, txnUUID);
 			logger.info("Txn Pdf created Successfully");
 			logger.info(" amount deducted from sender's card successfully {}", txnAmount);
+			
+			MailStructure mailStructure = new MailStructure();
+			mailStructure.setSubject("txnAmount from Card");
+			mailStructure.setMessage(txnAmount
+					+ " has been debited from your card successfully with txnId :: " + txnUUID);
+
+			mailService.sendEmail(mailStructure, senderCard.getEmail());
+			logger.info("Mail has been send to {} Successfully.", senderCard.getEmail());
+			
+			
+			mailStructure.setSubject("txnAmount to Card");
+			mailStructure.setMessage(amount
+					+ " has been credited to your card successfully with txnId :: " + txnUUID);
+
+			mailService.sendEmail(mailStructure, receiverCard.getEmail());
+			logger.info("Mail has been send to {} Successfully.", receiverCard.getEmail());
+
+			
 			moneyTransferResponse = new HashMap<>(5);
 			moneyTransferResponse.put(CardPaymentConstants.STATUS, CardPaymentConstants.SUCCESS);
 			moneyTransferResponse.put(CardPaymentConstants.STATUS_MSG, "Amount transfer success !!");
 			moneyTransferResponse.put("amount", String.valueOf(txnAmount));
 			moneyTransferResponse.put("txnUUID", txnUUID);
-			
 
 		} catch (Exception e) {
 			logger.info("EXCEPTION AT CS : {}", e.getMessage());

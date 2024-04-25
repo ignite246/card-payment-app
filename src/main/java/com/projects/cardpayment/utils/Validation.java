@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import com.projects.cardpayment.entities.Card;
+import com.projects.cardpayment.entities.UserApp;
 
 @Component
 public class Validation {
@@ -106,17 +107,67 @@ public class Validation {
 
 		return matcher.matches();
 	}
-	
-	public boolean isFirstnameLastnameBanknamePatternValid(String name ) {
-		logger.info("Firstname lastname bankname To Be Validated :: {}",name);	
+
+	public boolean isFirstnameLastnameBanknamePatternValid(String name) {
+		logger.info("Firstname lastname bankname To Be Validated :: {}", name);
 		String regex = "[A-z]{3,20}";
 		Pattern pattern = Pattern.compile(regex);
 		Matcher matcher = pattern.matcher(name);
-		
-		
+
 		return matcher.matches();
-		
-		
+
+	}
+
+	public boolean isPasswordValid(String password) {
+		logger.info("Password To Be Validated :: {}", password);
+		String regex = "[A-z0-9]{6,12}";
+		Pattern pattern = Pattern.compile(regex);
+		Matcher matcher = pattern.matcher(password);
+
+		return matcher.matches();
+	}
+
+	public boolean isRoleValid(String role) {
+		logger.info("Role To Be Validated :: {}", role);
+
+		/*
+		 * String regex = "[A-z]{3,20}"; Pattern pattern = Pattern.compile(regex);
+		 * Matcher matcher = pattern.matcher(role);
+		 * 
+		 * return matcher.matches();
+		 */
+
+		return role.equalsIgnoreCase("Admin") || role.equalsIgnoreCase("nonadmin");
+
+	}
+
+	/**
+	 * Validates create user app request body
+	 * 
+	 * @param userApp
+	 * @return
+	 */
+
+	public boolean createUserAppValidation(UserApp userApp) {
+		boolean validationPassed = true;
+
+		if (!isEmailPatternValid(userApp.getUserName())) {
+			logger.info("userApp email pattern is not matching :: VALIDATION FAILED");
+			validationPassed = false;
+		}
+
+		if (!isPasswordValid(userApp.getPassword())) {
+			logger.info("userApp password is not matching :: VALIDATION FAILED");
+			validationPassed = false;
+		}
+
+		if (!isRoleValid(userApp.getRole())) {
+			logger.info("userApp role is not matching :: VALIDATION FAILED");
+			validationPassed = false;
+
+		}
+
+		return validationPassed;
 	}
 
 }

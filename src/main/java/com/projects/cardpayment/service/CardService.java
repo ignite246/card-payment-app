@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
+import com.projects.cardpayment.constant.CardPaymentConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +32,8 @@ import com.projects.cardpayment.entities.Card;
 import com.projects.cardpayment.entities.TxnDetails;
 import com.projects.cardpayment.repository.CardRepository;
 import com.projects.cardpayment.repository.TxnRepository;
+import com.projects.cardpayment.utils.mailservice.MailService;
+import com.projects.cardpayment.utils.mailservice.MailStructure;
 
 @Service
 public class CardService {
@@ -42,6 +45,9 @@ public class CardService {
 
 	@Autowired
 	private TxnRepository txnRepository;
+
+	@Autowired
+	private MailService mailService;
 
 	public Card createCard(Card card) {
 
@@ -72,9 +78,7 @@ public class CardService {
 	}
 
 	public void deleteById(Integer cardId) {
-
 		cardRepository.deleteById(cardId);
-
 	}
 
 	public String addMoneyToCard(Integer cardId, int amount) {
@@ -90,9 +94,18 @@ public class CardService {
 			card = cardRepository.save(card);
 			logger.info("card {}", card);
 			Date txnDate = new Date();
-			txnUUID = txnPdf(null, card, amount);
-			saveTransactionalDetails(null, null, card.getCardId(), card.getCardHolderFirstName(), amount, txnDate,
-					"Amount Deposited", txnUUID);
+			txnUUID = generateTxnReceiptPdf(null, card, amount);
+			saveTransactionalDetails(card.getCardId(), card.getCardHolderFirstName(), card.getCardId(),
+					card.getCardHolderFirstName(), amount, txnDate, CardPaymentConstants.SELF_DEPOSIT, txnUUID);
+
+			// we will also send a mail to this card holder
+			MailStructure mailStructure = new MailStructure();
+			mailStructure.setSubject("Add Money To Card");
+			mailStructure.setMessage(amount + " has been added to your card successfully with txnId :: " + txnUUID);
+
+			mailService.sendEmail(mailStructure, card.getEmail());
+			logger.info("Mail has been send to {} Successfully.", card.getEmail());
+
 		} catch (Exception e) {
 			logger.info("CS : Exception  {}", e.getMessage());
 		}
@@ -110,15 +123,22 @@ public class CardService {
 		card.setCardBalance(cardNewBalance);
 		Date txnDate = new Date();
 		try {
-			txnUUID = txnPdf(card, null, amount);
-			saveTransactionalDetails(card.getCardId(), card.getCardHolderFirstName(), null, null, amount, txnDate,
-					"withdraw Transaction", txnUUID);
+			txnUUID = generateTxnReceiptPdf(card, null, amount);
+			saveTransactionalDetails(card.getCardId(), card.getCardHolderFirstName(), card.getCardId(),
+					card.getCardHolderFirstName(), amount, txnDate, CardPaymentConstants.SELF_WITHDRAWAL, txnUUID);
 			cardRepository.save(card);
+
+			MailStructure mailStructure = new MailStructure();
+			mailStructure.setSubject("WithDrawal money from Card");
+			mailStructure
+					.setMessage(amount + " has been withdrawal to your card successfully with txnId :: " + txnUUID);
+
+			mailService.sendEmail(mailStructure, card.getEmail());
+			logger.info("Mail has been send to {} Successfully.", card.getEmail());
 		} catch (FileNotFoundException | DocumentException e) {
-			logger.info(e.getMessage());
+			logger.error(e.getMessage());
 		}
-		 
-		 return txnUUID;
+		return txnUUID;
 	}
 
 	public Map<String, String> orderPayment(Integer cardId, Integer cardCVV, String cardExpiryDate,
@@ -137,93 +157,96 @@ public class CardService {
 
 			// Need to do the Card validation before proceeding with the payment
 			if (Objects.equals(cardCVV, cardCVVInDB) && cardExpiryDate.equals(cardExpiryDateInDB)) {
-
-				logger.info("===Card CVV and Card Expiry Date is correct===");
-				Integer cardBalance = card.getCardBalance();
-				Integer updatedCardBalance = cardBalance - amountToBePaid;
-				card.setCardBalance(updatedCardBalance);
-				cardRepository.save(card);
-				logger.info("Amount deducted and updated in db successfully");
-
-				// Preparing success response
-				Map<String, String> orderPaymentSuccessResponse = new HashMap<>(3);
-				orderPaymentSuccessResponse.put("status", "SUCCESS");
-				orderPaymentSuccessResponse.put("amount", String.valueOf(amountToBePaid));
-				orderPaymentSuccessResponse.put("txnId", String.valueOf(UUID.randomUUID()));
-
-				Date txnDate = new Date();
-
 				try {
-					txnUUID = txnPdf(card, null, amountToBePaid);
-					logger.info("uuid generated : {}", txnUUID);
-					saveTransactionalDetails(card.getCardId(), card.getCardHolderFirstName(), null, null,
-							amountToBePaid, txnDate, "Shopping Transaction", txnUUID);
+					logger.info("===Card CVV and Card Expiry Date are correct===");
+					Integer cardBalance = card.getCardBalance();
+					Integer updatedCardBalance = cardBalance - amountToBePaid;
+					card.setCardBalance(updatedCardBalance);
+					cardRepository.save(card);
+					logger.info("Amount deducted and updated in db successfully");
+
+					// Preparing success response
+
+					Date txnDate = new Date();
+					txnUUID = generateTxnReceiptPdf(card, null, amountToBePaid);
+					logger.info("Txn UUID generated : {}", txnUUID);
+					logger.info("Txn Receipt Pdf created Successfully");
+
+					saveTransactionalDetails(card.getCardId(), card.getCardHolderFirstName(), 0, "ECOMMERCE_APP",
+							amountToBePaid, txnDate, CardPaymentConstants.ORDER_PAYMENT, txnUUID);
+					logger.info("Transaction details saved successfully");
+
+					MailStructure mailStructure = new MailStructure();
+					mailStructure.setSubject("Order Payment from Card");
+					mailStructure.setMessage(
+							"Dear "+card.getCardHolderFirstName()+",\n"
+							+  amountToBePaid +" has been deducted(order payment) from your card successfully.\n"
+									+ "Txn ID : " + txnUUID +"\n\n"
+									+ "Thanks & Regards, \n"
+									+ "CardPaymentApp");
+
+					mailService.sendEmail(mailStructure, card.getEmail());
+					logger.info("Mail has been sent to {} successfully.", card.getEmail());
+
 				} catch (FileNotFoundException | DocumentException e) {
-					logger.info(e.getMessage());
+					logger.error("Exception occurred in orderPayment service {}", e.getMessage());
+				} catch (Exception ex) {
+					logger.error("Main exception occurred");
 				}
 
-				logger.info("Txn Pdf creating Successfull");
+				Map<String, String> orderPaymentSuccessResponse = new HashMap<>(3);
+				orderPaymentSuccessResponse.put(CardPaymentConstants.STATUS, CardPaymentConstants.SUCCESS);
+				orderPaymentSuccessResponse.put("amount", String.valueOf(amountToBePaid));
+				orderPaymentSuccessResponse.put("txnId", txnUUID);
+
 				return orderPaymentSuccessResponse;
 
 			} else {
 				logger.info("===Card CVV and/or Card Expiry Date are incorrect===");
-				// Prsetteparing failure response
 				Map<String, String> orderPaymentFailureResponse = new HashMap<>(2);
-				orderPaymentFailureResponse.put("status", "FAILURE");
-				orderPaymentFailureResponse.put("reason", "Invalid CARD CVV or EXPIRY DATE");
+				orderPaymentFailureResponse.put(CardPaymentConstants.STATUS, CardPaymentConstants.FAILURE);
+				orderPaymentFailureResponse.put(CardPaymentConstants.REASON, "Invalid CARD CVV or EXPIRY DATE");
 				return orderPaymentFailureResponse;
 			}
 		} else {
 			logger.info("Card does not have sufficient amount fo txn");
 			Map<String, String> orderPaymentFailureResponse = new HashMap<>();
-			orderPaymentFailureResponse.put("status", "FAILURE");
-			orderPaymentFailureResponse.put("reason", "Insufficient amount");
+			orderPaymentFailureResponse.put(CardPaymentConstants.STATUS, CardPaymentConstants.FAILURE);
+			orderPaymentFailureResponse.put(CardPaymentConstants.REASON, "Insufficient amount");
 			orderPaymentFailureResponse.put("currentBalance", String.valueOf(cardCurrentBalance));
-			logger.info("Transactional details save successfully");
 
 			return orderPaymentFailureResponse;
 		}
-
-//	} else {
-//		logger.info(amountToBePaid + " amount is 0 or less. It is invalid amount to proceed with the txn");
-
-		// Preparing failure response
-//		Map<String, String> orderPaymentFailureResponse = new HashMap<>(2);
-//		orderPaymentFailureResponse.put("status", "FAILURE");
-//		orderPaymentFailureResponse.put("reason", "Invalid txn amount");
-//		return orderPaymentFailureResponse;
 	}
 
 	public Map<String, String> moneyTransfer(Integer senderCardId, Integer receiverCardId, Integer amount)
 			throws FileNotFoundException, DocumentException {
 
-		logger.info("input received in money tranfer service");
-		logger.info("sendercardId :: {},receiverCardId :: {},amount :: {}", senderCardId, receiverCardId, amount);
+		logger.info("Input received in money tranfer service");
+		logger.info("senderCardId :: {}, receiverCardId :: {}, amount :: {}", senderCardId, receiverCardId, amount);
 
 		Map<String, String> moneyTransferResponse = null;
 
-		// Fetching receiver card details to credit amount in his card
-		
 		try {
 			Integer serviceChargeAmount = 0;
 			Integer txnAmount = amount;
 			Card senderCard = cardRepository.findById(senderCardId).get();
 			Card receiverCard = cardRepository.findById(receiverCardId).get();
 			Integer senderCardBalance = senderCard.getCardBalance();
-		
+
 			if (!senderCard.getCardBankName().equals(receiverCard.getCardBankName())) {
-				if (amount > 5000) {// 6000
+				if (amount > 5000) {
 					logger.info("amount is greater than 5000");
 					logger.info("service charge will be deducted");
 					Integer extraAmount = amount - 5000;
 					serviceChargeAmount = (extraAmount * 5) / 100;
 					logger.info("calculated service charged {}", serviceChargeAmount);
 
-					amount = amount - serviceChargeAmount;// 5950
+					amount = amount - serviceChargeAmount;
 					logger.info("Final amount after service charge deduction :: {} ", amount);
 				}
 			}
-			txnAmount = amount + serviceChargeAmount;// 5950+50=6000
+			txnAmount = amount + serviceChargeAmount;
 			Integer senderUpdatedCardBalance = senderCardBalance - txnAmount;
 			logger.info("newAmount{}", txnAmount);
 			senderCard.setCardBalance(senderUpdatedCardBalance);
@@ -235,32 +258,46 @@ public class CardService {
 			receiverCard.setCardBalance(receiverUpdatedCardBalance);
 			cardRepository.save(receiverCard);
 			logger.info(" amount credited to receiver's card successfully {}", amount);
-			
-			String txnUUID = txnPdf(senderCard, receiverCard, txnAmount);
+
+			String txnUUID = generateTxnReceiptPdf(senderCard, receiverCard, txnAmount);
 			saveTransactionalDetails(senderCard.getCardId(), senderCard.getCardHolderFirstName(),
 					receiverCard.getCardId(), receiverCard.getCardHolderFirstName(), amount, new Date(),
-					"Card to card txn", txnUUID);
+					CardPaymentConstants.CARD_2_CARD_MONEY_TRANSFER, txnUUID);
 			logger.info("Txn Pdf created Successfully");
 			logger.info(" amount deducted from sender's card successfully {}", txnAmount);
+
+			MailStructure mailStructure = new MailStructure();
+			mailStructure.setSubject("txnAmount from Card");
+			mailStructure
+					.setMessage(txnAmount + " has been debited from your card successfully with txnId :: " + txnUUID);
+
+			mailService.sendEmail(mailStructure, senderCard.getEmail());
+			logger.info("Mail has been send to {} Successfully.", senderCard.getEmail());
+
+			mailStructure.setSubject("txnAmount to Card");
+			mailStructure.setMessage(amount + " has been credited to your card successfully with txnId :: " + txnUUID);
+
+			mailService.sendEmail(mailStructure, receiverCard.getEmail());
+			logger.info("Mail has been send to {} Successfully.", receiverCard.getEmail());
+
 			moneyTransferResponse = new HashMap<>(5);
-			moneyTransferResponse.put("status", "Success");
-			moneyTransferResponse.put("message", "Amount transfer success !!");
+			moneyTransferResponse.put(CardPaymentConstants.STATUS, CardPaymentConstants.SUCCESS);
+			moneyTransferResponse.put(CardPaymentConstants.STATUS_MSG, "Amount transfer success !!");
 			moneyTransferResponse.put("amount", String.valueOf(txnAmount));
 			moneyTransferResponse.put("txnUUID", txnUUID);
-			
 
 		} catch (Exception e) {
 			logger.info("EXCEPTION AT CS : {}", e.getMessage());
 			moneyTransferResponse = new HashMap<>(5);
-			moneyTransferResponse.put("status", "FAILURE");
-			moneyTransferResponse.put("message", "Amount transfer failed !!");
+			moneyTransferResponse.put(CardPaymentConstants.STATUS, CardPaymentConstants.FAILURE);
+			moneyTransferResponse.put(CardPaymentConstants.STATUS_MSG, "Amount transfer failed !!");
 			moneyTransferResponse.put("reason", "Minimum txn amount must be 100");
 		}
 		return moneyTransferResponse;
 
 	}
 
-	private String txnPdf(Card senderCard, Card receiverCard, Integer txnAmount)
+	private String generateTxnReceiptPdf(Card senderCard, Card receiverCard, Integer txnAmount)
 			throws FileNotFoundException, DocumentException {
 
 		Document document = new Document(PageSize.LETTER);

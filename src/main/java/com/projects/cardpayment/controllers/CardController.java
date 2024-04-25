@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.projects.cardpayment.constant.CardPaymentConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,17 +63,15 @@ public class CardController {
 			Card card2 = cardService.createCard(card);
 
 			// got response from service layer
-			createCardResponse.put("status", "SUCCESS");
+			createCardResponse.put(CardPaymentConstants.STATUS, CardPaymentConstants.SUCCESS);
 			createCardResponse.put("cardId", String.valueOf(card2.getCardId()));
 			createCardResponse.put("message", "Card created successfully");
 		} else {
-			createCardResponse.put("status", "FAILURE");
+			createCardResponse.put(CardPaymentConstants.STATUS, CardPaymentConstants.FAILURE);
 			createCardResponse.put("message", "Card creation failed");
 			createCardResponse.put("reason", "Invalid card creation request body");
 		}
-
 		return createCardResponse;
-
 	}
 
 	@GetMapping("/get-all-cards")
@@ -93,14 +92,14 @@ public class CardController {
 		try {
 
 			Card foundCard = cardService.findCardById(cardId);
-			response.setStatusMessage("SUCCESS");
+			response.setStatusMessage(CardPaymentConstants.SUCCESS);
 			response.setStatusCode(7001);
 			response.setCard(foundCard);
 
 		} catch (Exception ex) {
 			logger.error("Exception occurred while finding the card of the id :: {}", cardId);
 			logger.error("Exception reason :: {} ", ex.getMessage());
-			response.setStatusMessage("FAILURE");
+			response.setStatusMessage(CardPaymentConstants.FAILURE);
 			response.setStatusCode(8005); // Project specific status code
 			response.setCard(null);
 		}
@@ -118,22 +117,19 @@ public class CardController {
 		try {
 
 			cardService.deleteById(cardId);
-			deleteCardAPIResponse.put("status", "SUCCESS");
-			deleteCardAPIResponse.put("statusCode", "7000"); // Project specific status code //Not a standard HTTP
-																// Status Code //Only project wale know ish code ka
-																// meaning
-			deleteCardAPIResponse.put("message", "Card deleted successfully");
+			logger.info("card with id {} deleted successfully", cardId);
+			deleteCardAPIResponse.put(CardPaymentConstants.STATUS, CardPaymentConstants.SUCCESS);
+			deleteCardAPIResponse.put(CardPaymentConstants.STATUS_CODE, CardPaymentConstants.SUCCESS_STATUS_200);
+			deleteCardAPIResponse.put(CardPaymentConstants.STATUS_MSG, "Card deleted successfully");
 			deleteCardAPIResponse.put("cardId", String.valueOf(cardId));
 		} catch (Exception ex) {
 			logger.error("Exception occurred while deleting the card of the id :: {} ", cardId);
 			logger.error("Exception reason ::{} ", ex.getMessage());
-			deleteCardAPIResponse.put("status", "FAILURE");
-			deleteCardAPIResponse.put("statusCode", "8000"); // Project specific status code //Not a standard HTTP
-																// Status Code //Only project wale know ish code ka
-																// meaning
-			deleteCardAPIResponse.put("message", "Card could not be deleted");
+			deleteCardAPIResponse.put(CardPaymentConstants.STATUS, CardPaymentConstants.FAILURE);
+			deleteCardAPIResponse.put(CardPaymentConstants.STATUS_CODE, CardPaymentConstants.FAILURE_STATUS_500);
+			deleteCardAPIResponse.put(CardPaymentConstants.STATUS_MSG, "Card could not be deleted");
 			deleteCardAPIResponse.put("cardId", String.valueOf(cardId));
-			deleteCardAPIResponse.put("reason", "Card ID does not exist");
+			deleteCardAPIResponse.put(CardPaymentConstants.REASON, "Card ID does not exist");
 		}
 
 		logger.info("deleteACardById API Response :: {} ", deleteCardAPIResponse);
@@ -153,26 +149,22 @@ public class CardController {
 			logger.info("Amount is greater than 0. Its a valid amount for the txn");
 
 			try {
-
 				String txnUUID = cardService.addMoneyToCard(cardId, amount);
-
 				logger.info("{} Amount added to the card", amount);
-
-				// Logic to store transaction details
 
 				// now generating/preparing response for the API in case of SUCCESS
 				Map<String, String> addMoneySuccessResponse = new HashMap<>(3);
-				addMoneySuccessResponse.put("status", "SUCCESS");
+				addMoneySuccessResponse.put(CardPaymentConstants.STATUS, CardPaymentConstants.SUCCESS);
 				addMoneySuccessResponse.put("amount", String.valueOf(amount));
-				addMoneySuccessResponse.put("message", "Money added successfully");
+				addMoneySuccessResponse.put(CardPaymentConstants.STATUS_MSG, "Money added successfully");
 				addMoneySuccessResponse.put("txnUUID", txnUUID);
 				return addMoneySuccessResponse;
 			} catch (Exception ex) {
 				Map<String, String> addMoneyFailureResponse = new HashMap<>(3);
-				addMoneyFailureResponse.put("status", "FAILURE");
+				addMoneyFailureResponse.put(CardPaymentConstants.STATUS,CardPaymentConstants.FAILURE);
 				addMoneyFailureResponse.put("amount", String.valueOf(amount));
-				addMoneyFailureResponse.put("message", "Money could not be added successfully");
-				addMoneyFailureResponse.put("reason", "Card Id does not exist");
+				addMoneyFailureResponse.put(CardPaymentConstants.STATUS_MSG, "Money could not be added successfully");
+				addMoneyFailureResponse.put(CardPaymentConstants.REASON, "Card Id does not exist");
 				return addMoneyFailureResponse;
 			}
 		} else {
@@ -180,9 +172,9 @@ public class CardController {
 
 			// now generating/preparing response for the API in case of FAILURE
 			Map<String, String> addMoneyResponseFailure = new HashMap<>(3);
-			addMoneyResponseFailure.put("status", "FAILURE");
+			addMoneyResponseFailure.put(CardPaymentConstants.STATUS,CardPaymentConstants.FAILURE);
 			addMoneyResponseFailure.put("amount", String.valueOf(amount));
-			addMoneyResponseFailure.put("message", "Money could not be added successfully");
+			addMoneyResponseFailure.put(CardPaymentConstants.STATUS_MSG, "Money could not be added successfully");
 			return addMoneyResponseFailure;
 		}
 
@@ -201,9 +193,9 @@ public class CardController {
 
 			// Preparing success response
 			Map<String, String> withdrawMoneySuccessResponse = new HashMap<>();
-			withdrawMoneySuccessResponse.put("status", "SUCCESS");
+			withdrawMoneySuccessResponse.put(CardPaymentConstants.STATUS,CardPaymentConstants.SUCCESS);
 			withdrawMoneySuccessResponse.put("amount", String.valueOf(amount));
-			withdrawMoneySuccessResponse.put("message", "Money withdrawn successfully");
+			withdrawMoneySuccessResponse.put(CardPaymentConstants.STATUS_MSG, "Money withdrawn successfully");
 			withdrawMoneySuccessResponse.put("txnUUID", txnUUID);
 			return withdrawMoneySuccessResponse;
 
@@ -211,10 +203,10 @@ public class CardController {
 			logger.info("{} amount is 0 or less. It is invalid amount to proceed with the txn ", amount);
 			// Preparing Failure response
 			Map<String, String> withdrawMoneyFailureResponse = new HashMap<>();
-			withdrawMoneyFailureResponse.put("status", "FAILURE");
+			withdrawMoneyFailureResponse.put(CardPaymentConstants.STATUS,CardPaymentConstants.FAILURE);
 			withdrawMoneyFailureResponse.put("amount", String.valueOf(amount));
-			withdrawMoneyFailureResponse.put("message", "Money withdrawn failed");
-			withdrawMoneyFailureResponse.put("reason", "Invalid amount");
+			withdrawMoneyFailureResponse.put(CardPaymentConstants.STATUS_MSG, "Money withdrawn failed");
+			withdrawMoneyFailureResponse.put(CardPaymentConstants.REASON, "Invalid amount");
 			return withdrawMoneyFailureResponse;
 		}
 
@@ -226,7 +218,7 @@ public class CardController {
 			@RequestParam("amount") Integer amountToBePaid) {
 		Map<String, String> orderPayment = null;
 		logger.info("====== orderPayment :: Input Received ====");
-		logger.info("Card ID :: {}" , cardId);
+		logger.info("Card ID :: {}", cardId);
 		logger.info("Card CVV :: {}", cardCVV);
 		logger.info("Card Expiry Date :: {}", cardExpiryDate);
 		logger.info("Amount to be paid :: {}", amountToBePaid);
@@ -240,8 +232,8 @@ public class CardController {
 		} else {
 			logger.info("amount is 0 or less. It is invalid amount to proceed with the txn {}", amountToBePaid);
 			orderPayment = new HashMap<>();
-			orderPayment.put("status", "FAILURE");
-			orderPayment.put("reason", "Invalid txn amount");
+			orderPayment.put(CardPaymentConstants.STATUS,CardPaymentConstants.FAILURE);
+			orderPayment.put(CardPaymentConstants.REASON, "Invalid txn amount");
 			return orderPayment;
 		}
 		return orderPayment;
@@ -260,7 +252,7 @@ public class CardController {
 		logger.info("Amount to be transfer :: {}", amount);
 
 		if (amount >= minimumTxnAmount) {
-			logger.info(" Amount is or more. So its an valid amount to process with txn {}{}", amount,
+			logger.info("{} Amount is {} or more. So its an valid amount to process with txn", amount,
 					minimumTxnAmount);
 			// Fetching sender card details to deduct amount from his card
 			moneyTransfer = cardService.moneyTransfer(senderCardId, receiverCardId, amount);
@@ -270,8 +262,8 @@ public class CardController {
 			logger.info("Amount is less than 100. So its an invalid amount to process the txn {}", amount);
 			// Preparing response in case of success
 			moneyTransfer = new HashMap<>(5);
-			moneyTransfer.put("status", "FAILURE");
-			moneyTransfer.put("message", "Amount transfer failed !!");
+			moneyTransfer.put(CardPaymentConstants.STATUS, CardPaymentConstants.FAILURE);
+			moneyTransfer.put(CardPaymentConstants.STATUS_MSG, "Amount transfer failed !!");
 			moneyTransfer.put("reason", "Minimum txn amount must be 100");
 		}
 		return moneyTransfer;
@@ -333,10 +325,10 @@ public class CardController {
 			}
 			getCardBalanceInBetweenResDTO = new GetCardBalanceInBetweenResDTO();
 			if (listOfCardBalance == null || listOfCardBalance.isEmpty()) {
-				getCardBalanceInBetweenResDTO.setStatus("Failure");
+				getCardBalanceInBetweenResDTO.setStatus(CardPaymentConstants.FAILURE);
 				getCardBalanceInBetweenResDTO.setStatusCode("1");// frontend team will have mapping as No Card Found
 			} else {
-				getCardBalanceInBetweenResDTO.setStatus("Success");
+				getCardBalanceInBetweenResDTO.setStatus(CardPaymentConstants.SUCCESS);
 				getCardBalanceInBetweenResDTO.setStatusCode("0");
 				getCardBalanceInBetweenResDTO.setCardList(listOfCardBalance);
 
@@ -359,10 +351,10 @@ public class CardController {
 				cardsByBankResDTO = new CardsByBankResDTO();
 
 				if (cardsByBankName == null || cardsByBankName.isEmpty()) {
-					cardsByBankResDTO.setStatus("Failure");
+					cardsByBankResDTO.setStatus(CardPaymentConstants.FAILURE);
 					cardsByBankResDTO.setStatusCode("7000");// frontend team will have mapping as No Card Found
 				} else {
-					cardsByBankResDTO.setStatus("Success");
+					cardsByBankResDTO.setStatus(CardPaymentConstants.SUCCESS);
 					cardsByBankResDTO.setStatusCode("8000");
 					cardsByBankResDTO.setCardList(cardsByBankName);
 				}

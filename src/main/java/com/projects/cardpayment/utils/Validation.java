@@ -120,7 +120,7 @@ public class Validation {
 
 	public boolean isPasswordValid(String password) {
 		logger.info("Password To Be Validated :: {}", password);
-		String regex = "[A-z]{6,12}";
+		String regex = "^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[@#$%])[A-z0-9@#$%]{8,20}$";
 		Pattern pattern = Pattern.compile(regex);
 		Matcher matcher = pattern.matcher(password);
 
@@ -145,7 +145,7 @@ public class Validation {
 	 * @return
 	 */
 
-	public boolean createUserAppValidation(User userApp) {
+	public boolean userValidation(User userApp) {
 		boolean validationPassed = true;
 
 		if (!isEmailPatternValid(userApp.getUserName())) {

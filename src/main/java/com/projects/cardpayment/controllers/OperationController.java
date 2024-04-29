@@ -53,11 +53,8 @@ public class OperationController {
 	public UserLoginResponseDTO userLogin(@RequestHeader("userName")String userName, @RequestHeader("password") String password) {
 
 		try {
-		//	String userName = loginRequestDTO.getUserName();
-		//	String password = loginRequestDTO.getPassword();
 			logger.info("username = " + userName);
 			logger.info("password = " + password);
-//			logger.info("requestDTO= " + loginRequestDTO);
 			User user = userAppService.userLoginService(userName, password);
 			logger.info("here is data " + user);
 			if (user != null) {

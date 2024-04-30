@@ -12,13 +12,10 @@ import com.projects.cardpayment.repository.UserAppRepository;
 
 @Service
 public class UserAppService {
-	
 	Logger logger = LoggerFactory.getLogger(UserAppService.class);
-	
+
 	@Autowired
 	private UserAppRepository userAppRepo;
-
-	
 
 	public User createAppUser(User userApp) {
 		logger.info("CPA : CS : Saving card details {}", userApp);
@@ -32,13 +29,8 @@ public class UserAppService {
 		return savedUserDetails;
 	}
 
-	public User userLoginService(String userName,String password) {
-		
-		
-		User byUserNameAndPassword = userAppRepo.findByUserNameAndPassword(userName,password);
+	public User userLoginService(String userName, String password) {
+		User byUserNameAndPassword = userAppRepo.findByUserNameAndPassword(userName, password);
 		return byUserNameAndPassword;
-		
 	}
-
-
 }

@@ -60,11 +60,9 @@ public class User {
 	public String toString() {
 		return "UserApp [id=" + id + ", userName=" + userName + ", password=" + password + ", role=" + role + "]";
 	}
-
 	public User() {
 		super();
 	}
-
 	public User(Integer id, String userName, String password, String role) {
 		super();
 		this.id = id;
@@ -72,5 +70,4 @@ public class User {
 		this.password = password;
 		this.role = role;
 	}
-
 }

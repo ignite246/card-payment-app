@@ -16,6 +16,8 @@ public class CardPaymentConstants {
 	public static final String SUCCESS_STATUS_200="200";
 	public static final String FAILURE_STATUS_500="500";
 	public static final String REASON = "reason";
+	public static final String ADMIN = "admin";
+	public static final String NONADMIN = "nonAdmin";
 	
 	/************************ Money Transaction related constants **************************/
 	
@@ -29,5 +31,6 @@ public class CardPaymentConstants {
 
 	public static final String TXN_API = "/txn-api";
 	public static final String FIND_TXN_DETAILS_BY_CARD_ID = "/find-txnDetails-by-id";
+	
 
 }

@@ -48,10 +48,9 @@ public class OperationController {
 		}
 		return response;
 	}
-
 	@PostMapping("/user-Login")
-	public UserLoginResponseDTO userLogin(@RequestHeader("userName")String userName, @RequestHeader("password") String password) {
-
+	public UserLoginResponseDTO userLogin(@RequestHeader("userName") String userName,
+			@RequestHeader("password") String password) {
 		try {
 			logger.info("username = " + userName);
 			logger.info("password = " + password);
@@ -62,17 +61,14 @@ public class OperationController {
 				userLoginResponseDTO.setResponseCode("200");
 				userLoginResponseDTO.setResponseMsg("login Success");
 				userLoginResponseDTO.setRole(user.getRole());
-
 				return userLoginResponseDTO;
 			}
-
 			else {
 				UserLoginResponseDTO userLoginResponseDTO = new UserLoginResponseDTO();
 				userLoginResponseDTO.setResponseCode("201");
 				userLoginResponseDTO.setResponseMsg("login Failed");
 				userLoginResponseDTO.setRole(" ");
 				return userLoginResponseDTO;
-
 			}
 		} catch (Exception e) {
 			UserLoginResponseDTO userLoginResponseDTO = new UserLoginResponseDTO();
@@ -80,15 +76,10 @@ public class OperationController {
 			userLoginResponseDTO.setResponseMsg(e.getMessage());
 			userLoginResponseDTO.setRole(" ");
 			return userLoginResponseDTO;
-
 		}
-
 	}
-	
 	@GetMapping("/user")
-	public String user(@RequestHeader("userName") String userName ) {
+	public String user(@RequestHeader("userName") String userName) {
 		return userName;
-		
 	}
-
 }

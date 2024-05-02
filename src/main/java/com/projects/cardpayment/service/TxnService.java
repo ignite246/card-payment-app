@@ -17,9 +17,7 @@ import com.projects.cardpayment.response.dto.TxnDetailsByCardIdResDTO;
 public class TxnService {
 
     Logger logger = LoggerFactory.getLogger(TxnService.class);
-
     private Helper helper;
-
 
     @Autowired
     public TxnService(Helper helper) {
@@ -34,12 +32,9 @@ public class TxnService {
         List<TxnDetails> txnDetailsList = helper.getBySenderId(cardId);
         logger.info("transaction details {}", txnDetailsList);
         Integer largestAmount = 0;
-
         for (int i = 0; i < txnDetailsList.size(); i++) {
-
             txnDetails2 = txnDetailsList.get(i);
             txnAmount = txnDetails2.getTxnAmount();
-
             if (txnAmount > largestAmount) {
                 largestAmount = txnAmount;
                 largestAmtTxn = txnDetails2;
@@ -47,7 +42,6 @@ public class TxnService {
         }
         logger.info("txnL== amount {}", largestAmount);
         logger.info("largest amount txn detail {}", largestAmtTxn);
-
         response = new GetLargestAmountTxnDetailsResDTO();
         if (largestAmtTxn == null) {
             response.setStatus("Failure");
@@ -57,14 +51,11 @@ public class TxnService {
             response.setStatusCode("8000");
             response.setTxnDetails(largestAmtTxn);
         }
-
         return response;
-
     }
 
     public TxnDetailsByCardIdResDTO findTxnDetailsByCardId(Integer cardId) {
         TxnDetailsByCardIdResDTO response = null;
-
         try {
             List<TxnDetails> txnDetails = helper.getBySenderId(cardId);
             logger.info("transaction details {}", txnDetails);
@@ -78,7 +69,6 @@ public class TxnService {
             response.setStatus("Failed");
             response.setStatusCode("8000");
             response.setTxnList(null);
-
         }
         return response;
     }
@@ -93,10 +83,8 @@ public class TxnService {
         try {
             status = "failure";
             code = "7000";
-
             List<TxnDetails> txnDetailsList = helper.getBySenderId(cardId);
             logger.info("TS:transaction details {}", txnDetailsList);
-
             if (!(txnDetailsList == null || txnDetailsList.isEmpty())) {
                 TxnDetails firstTxnDetails = txnDetailsList.get(0); // fetching txn amount of first txn details
                 Integer smallestAmount = firstTxnDetails.getTxnAmount();

@@ -50,23 +50,19 @@ public class CardService {
 	private MailService mailService;
 
 	public Card createCard(Card card) {
-
 		logger.info("CPA : CS : Saving card details {}", card);
 		Card savedCard = null;
-
 		try {
 			savedCard = cardRepository.save(card);
 		} catch (Exception e) {
 			logger.error("Exception found at CPA : CS ", e);
 		}
 		return savedCard;
-
 	}
 
 	public List<Card> getAllCards() {
 		logger.info("inside getallCards service method");
 		List<Card> allCards = cardRepository.findAll();
-
 		logger.info("CS : number of cards fetched from db {}", allCards);
 		return allCards;
 	}
@@ -221,12 +217,9 @@ public class CardService {
 
 	public Map<String, String> moneyTransfer(Integer senderCardId, Integer receiverCardId, Integer amount)
 			throws FileNotFoundException, DocumentException {
-
 		logger.info("Input received in money tranfer service");
 		logger.info("senderCardId :: {}, receiverCardId :: {}, amount :: {}", senderCardId, receiverCardId, amount);
-
 		Map<String, String> moneyTransferResponse = null;
-
 		try {
 			Integer serviceChargeAmount = 0;
 			Integer txnAmount = amount;
@@ -241,7 +234,6 @@ public class CardService {
 					Integer extraAmount = amount - 5000;
 					serviceChargeAmount = (extraAmount * 5) / 100;
 					logger.info("calculated service charged {}", serviceChargeAmount);
-
 					amount = amount - serviceChargeAmount;
 					logger.info("Final amount after service charge deduction :: {} ", amount);
 				}
@@ -294,12 +286,10 @@ public class CardService {
 			moneyTransferResponse.put("reason", "Minimum txn amount must be 100");
 		}
 		return moneyTransferResponse;
-
 	}
 
 	private String generateTxnReceiptPdf(Card senderCard, Card receiverCard, Integer txnAmount)
 			throws FileNotFoundException, DocumentException {
-
 		Document document = new Document(PageSize.LETTER);
 		String uuid = String.valueOf(UUID.randomUUID());
 		String pdfName = uuid + "_receipt.pdf";
@@ -332,9 +322,7 @@ public class CardService {
 
 	private void saveTransactionalDetails(Integer senderId, String senderName, Integer receiverId, String receiverName,
 			Integer amount, Date txnDate, String purpose, String txnUUID) {
-
 		TxnDetails txnDetails = new TxnDetails();
-
 		txnDetails.setSenderName(senderName);
 		txnDetails.setSenderId(senderId);
 		txnDetails.setReceiverName(receiverName);
@@ -343,35 +331,26 @@ public class CardService {
 		txnDetails.setTxnDate(txnDate);
 		txnDetails.setPurpose(purpose);
 		txnDetails.setTxnUUID(txnUUID);
-
 		logger.info("saveTransactionalDetails {}", txnDetails);
 		logger.info("setting txnUUID {}", txnUUID);
 		txnRepository.save(txnDetails);
 		logger.info("Transactional details save successfully");
-
 	}
 
 	public List<Card> getListOfExpiredCards() {
 		List<Card> listOfExpiredCard = new ArrayList<>();
-
 		List<Card> cards = cardRepository.findAll();
 		for (int i = 0; i < cards.size(); i++) {
 			Card card = cards.get(i);
-
 			String cardExpiryDate = card.getCardExpiryDate();
-
 			DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-
 			// Parse the string into a LocalDate object
 			LocalDate cardDate = LocalDate.parse(cardExpiryDate, formatter);
-
 			// Compare with another date
 			LocalDate currentDate = LocalDate.now();
-
 			if (cardDate.isBefore(currentDate)) {
 				logger.info("Card is expired {}", card);
 				listOfExpiredCard.add(card);
-
 			}
 		}
 		return listOfExpiredCard;
@@ -381,9 +360,7 @@ public class CardService {
 		Integer cardCVVNo = 0;
 		Card card = cardRepository.findById(cardId).get();
 		cardCVVNo = card.getCardCVVNumber();
-
 		return cardCVVNo;
-
 	}
 
 	public List<Card> getListOfCardThatHaveBalanceInBetween(Integer lowerAmount, Integer upperAmount) {
@@ -391,21 +368,16 @@ public class CardService {
 		List<Card> listOfCardBalance = new ArrayList<>();
 		Card card = null;
 		allCards = cardRepository.findAll();
-
 		logger.info("allCards {}", allCards);
-
 		for (int i = 0; i < allCards.size(); i++) {
 			card = allCards.get(i);
 			Integer cardBalance = card.getCardBalance();
 			logger.info("card Balance*** {}", cardBalance);
-
 			if (cardBalance >= lowerAmount && cardBalance <= upperAmount) {
-
 				listOfCardBalance.add(card);
 			}
 		}
 		return listOfCardBalance;
-
 	}
 
 	public List<Card> getCardsByBankName(String bankName) {
@@ -413,7 +385,6 @@ public class CardService {
 		List<Card> listOfCards = null;
 		Card card = null;
 		String cardBankName = null;
-
 		allCards = cardRepository.findAll();
 		listOfCards = new ArrayList<>();
 		for (int i = 0; i < allCards.size(); i++) {
@@ -425,5 +396,4 @@ public class CardService {
 		}
 		return listOfCards;
 	}
-
 }

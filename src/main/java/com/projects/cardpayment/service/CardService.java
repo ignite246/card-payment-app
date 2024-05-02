@@ -30,6 +30,7 @@ import com.itextpdf.text.Paragraph;
 import com.itextpdf.text.pdf.PdfWriter;
 import com.projects.cardpayment.entities.Card;
 import com.projects.cardpayment.entities.TxnDetails;
+import com.projects.cardpayment.entities.User;
 import com.projects.cardpayment.repository.CardRepository;
 import com.projects.cardpayment.repository.TxnRepository;
 import com.projects.cardpayment.utils.mailservice.MailService;
@@ -48,6 +49,9 @@ public class CardService {
 
 	@Autowired
 	private MailService mailService;
+
+	@Autowired
+	private UserAppService userAppService;
 
 	public Card createCard(Card card) {
 		logger.info("CPA : CS : Saving card details {}", card);
@@ -73,8 +77,24 @@ public class CardService {
 		return card;
 	}
 
-	public void deleteById(Integer cardId) {
-		cardRepository.deleteById(cardId);
+	public boolean deleteById(Integer cardId, String userName, String password) {
+		logger.info("VALIDATING USERNAME AND PASSWORD userName:{},psssword:{}", userName, password);
+		User user = userAppService.userLoginService(userName, password);
+		if (user != null) {
+			logger.info("LOGIN VALIDATION SUCCESSFULL");
+			String role = user.getRole();
+			if (role.equalsIgnoreCase("ADMIN")) {
+				logger.info("ADMIN VALIDATION SUCCESSFULL");
+				cardRepository.deleteById(cardId);
+				return true;
+			} else {
+				logger.info("ADMIN VALIDATION FAILED");
+				return false;
+			}
+		} else {
+			logger.info("user doesn't exist");
+			return false;
+		}
 	}
 
 	public String addMoneyToCard(Integer cardId, int amount) {
@@ -174,12 +194,9 @@ public class CardService {
 
 					MailStructure mailStructure = new MailStructure();
 					mailStructure.setSubject("Order Payment from Card");
-					mailStructure.setMessage(
-							"Dear "+card.getCardHolderFirstName()+",\n"
-							+  amountToBePaid +" has been deducted(order payment) from your card successfully.\n"
-									+ "Txn ID : " + txnUUID +"\n\n"
-									+ "Thanks & Regards, \n"
-									+ "CardPaymentApp");
+					mailStructure.setMessage("Dear " + card.getCardHolderFirstName() + ",\n" + amountToBePaid
+							+ " has been deducted(order payment) from your card successfully.\n" + "Txn ID : " + txnUUID
+							+ "\n\n" + "Thanks & Regards, \n" + "CardPaymentApp");
 
 					mailService.sendEmail(mailStructure, card.getEmail());
 					logger.info("Mail has been sent to {} successfully.", card.getEmail());

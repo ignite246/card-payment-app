@@ -79,7 +79,14 @@ public class OperationController {
 		}
 	}
 	@GetMapping("/user")
-	public String user(@RequestHeader("userName") String userName) {
+	public String user(@RequestHeader("userName") String userName,@RequestHeader("password") String password) {
+		User user = userAppService.userLoginService(userName, password);
+		String role = user.getRole();
+		if(role.equalsIgnoreCase("ADMIN")) {
+			
+			
+		}
+		
 		return userName;
 	}
 }

@@ -113,34 +113,11 @@ public class CardController {
 			@RequestHeader("userName") String userName, @RequestHeader("password") String password) {
 		logger.info("====== deleteACardById :: Input Received ====");
 		logger.info("Card ID ::{} ", cardId);
-		final Map<String, String> deleteCardAPIResponse = new HashMap<>();
-		try {
-			boolean deleteById = cardService.deleteById(cardId, userName, password);
-			if (deleteById) {
-				logger.info("card with id {} deleted successfully", cardId);
-				deleteCardAPIResponse.put(CardPaymentConstants.STATUS, CardPaymentConstants.SUCCESS);
-				deleteCardAPIResponse.put(CardPaymentConstants.STATUS_CODE, CardPaymentConstants.SUCCESS_STATUS_200);
-				deleteCardAPIResponse.put(CardPaymentConstants.STATUS_MSG, "Card deleted successfully");
-				deleteCardAPIResponse.put("cardId", String.valueOf(cardId));
-			} else {
-				deleteCardAPIResponse.put(CardPaymentConstants.STATUS, CardPaymentConstants.FAILURE);
-				deleteCardAPIResponse.put(CardPaymentConstants.STATUS_CODE, CardPaymentConstants.FAILURE_STATUS_500);
-				deleteCardAPIResponse.put(CardPaymentConstants.STATUS_MSG, "Card could not be deleted");
-				deleteCardAPIResponse.put("cardId", String.valueOf(cardId));
-				deleteCardAPIResponse.put(CardPaymentConstants.REASON, "UNAUTHORIZED ACTION!!");
-			}
-		} catch (Exception ex) {
-			logger.error("Exception occurred while deleting the card of the id :: {} ", cardId);
-			logger.error("Exception reason ::{} ", ex.getMessage());
-			deleteCardAPIResponse.put(CardPaymentConstants.STATUS, CardPaymentConstants.FAILURE);
-			deleteCardAPIResponse.put(CardPaymentConstants.STATUS_CODE, CardPaymentConstants.FAILURE_STATUS_500);
-			deleteCardAPIResponse.put(CardPaymentConstants.STATUS_MSG, "Card could not be deleted");
-			deleteCardAPIResponse.put("cardId", String.valueOf(cardId));
-			deleteCardAPIResponse.put(CardPaymentConstants.REASON, "Card ID does not exist");
-		}
-		logger.info("deleteACardById API Response :: {} ", deleteCardAPIResponse);
-		return deleteCardAPIResponse;
+
+		Map<String, String> deleteById = cardService.deleteById(cardId, userName, password);
+		return deleteById;
 	}
+
 	@PatchMapping("/add-money-to-card")
 	public Map<String, String> addMoneyToCard(@RequestParam("cardId") Integer cardId,
 			@RequestParam("amount") Integer amount) {

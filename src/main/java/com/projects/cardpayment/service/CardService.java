@@ -81,14 +81,14 @@ public class CardService {
 		logger.info("VALIDATING USERNAME AND PASSWORD userName:{},psssword:{}", userName, password);
 		User user = userAppService.userLoginService(userName, password);
 		if (user != null) {
-			logger.info("LOGIN VALIDATION SUCCESSFULL");
+			logger.info("Login validation successful");
 			String role = user.getRole();
 			if (role.equalsIgnoreCase("ADMIN")) {
-				logger.info("ADMIN VALIDATION SUCCESSFULL");
+				logger.info("Admin validation successfull");
 				cardRepository.deleteById(cardId);
 				return true;
 			} else {
-				logger.info("ADMIN VALIDATION FAILED");
+				logger.info("Admin validation failed");
 				return false;
 			}
 		} else {

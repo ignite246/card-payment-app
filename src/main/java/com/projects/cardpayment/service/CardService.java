@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 import com.projects.cardpayment.constant.CardPaymentConstants;
@@ -85,38 +86,37 @@ public class CardService {
 			logger.info("Login validation successful");
 			String role = user.getRole();
 			if (role.equalsIgnoreCase("ADMIN")) {
-				if(cardRepository.findById(cardId)!=null && !cardRepository.findById(cardId).isEmpty() ) {
-				logger.info("Admin validation successfull");
-				cardRepository.deleteById(cardId);
-				
-				deleteCardAPIResponse.put(CardPaymentConstants.STATUS, CardPaymentConstants.SUCCESS);
-				deleteCardAPIResponse.put(CardPaymentConstants.STATUS_CODE, CardPaymentConstants.SUCCESS_STATUS_200);
-				deleteCardAPIResponse.put(CardPaymentConstants.STATUS_MSG, "Card deleted successfully");
-				deleteCardAPIResponse.put("cardId", String.valueOf(cardId));
-				logger.info("1 card deleted");
-				return deleteCardAPIResponse;
-				
-				
-			}else{
-				logger.info("card not found");
-				deleteCardAPIResponse.put(CardPaymentConstants.STATUS, CardPaymentConstants.FAILURE);
-				deleteCardAPIResponse.put(CardPaymentConstants.STATUS_CODE, CardPaymentConstants.FAILURE_STATUS_500);
-				deleteCardAPIResponse.put(CardPaymentConstants.STATUS_MSG, "Card not found");
-				deleteCardAPIResponse.put("cardId", String.valueOf(cardId));
-				deleteCardAPIResponse.put(CardPaymentConstants.REASON, "Invalid card Id!!");
-				logger.info("card not found");
-				return deleteCardAPIResponse;
-				}	
-			}
-			else {
+				Optional<Card> cardid = cardRepository.findById(cardId);
+				if (cardid.isPresent()) {
+					logger.info("Admin validation successfull");
+					cardRepository.deleteById(cardId);
+
+					deleteCardAPIResponse.put(CardPaymentConstants.STATUS, CardPaymentConstants.SUCCESS);
+					deleteCardAPIResponse.put(CardPaymentConstants.STATUS_CODE,
+							CardPaymentConstants.SUCCESS_STATUS_200);
+					deleteCardAPIResponse.put(CardPaymentConstants.STATUS_MSG, "Card deleted successfully");
+					deleteCardAPIResponse.put("cardId", String.valueOf(cardId));
+					logger.info("1 card deleted");
+					return deleteCardAPIResponse;
+				} else {
+					logger.info("card not found");
+					deleteCardAPIResponse.put(CardPaymentConstants.STATUS, CardPaymentConstants.FAILURE);
+					deleteCardAPIResponse.put(CardPaymentConstants.STATUS_CODE,
+							CardPaymentConstants.FAILURE_STATUS_500);
+					deleteCardAPIResponse.put(CardPaymentConstants.STATUS_MSG, "Card not found");
+					deleteCardAPIResponse.put("cardId", String.valueOf(cardId));
+					deleteCardAPIResponse.put(CardPaymentConstants.REASON, "Invalid card Id!!");
+					logger.info("card not found");
+					return deleteCardAPIResponse;
+				}
+			} else {
 				logger.info("Admin validation failed");
 				deleteCardAPIResponse.put(CardPaymentConstants.STATUS, CardPaymentConstants.FAILURE);
-				deleteCardAPIResponse.put(CardPaymentConstants.STATUS_CODE,"401");
+				deleteCardAPIResponse.put(CardPaymentConstants.STATUS_CODE, "401");
 				deleteCardAPIResponse.put(CardPaymentConstants.STATUS_MSG, "Authorization failed");
 				deleteCardAPIResponse.put("cardId", String.valueOf(cardId));
 				deleteCardAPIResponse.put(CardPaymentConstants.REASON, "user doesn't have admin role");
 				return deleteCardAPIResponse;
-				
 			}
 		} else {
 			logger.info("username or password incorrect");
@@ -128,7 +128,6 @@ public class CardService {
 			logger.info("user doesn't exist");
 			return deleteCardAPIResponse;
 		}
-		
 	}
 
 	public String addMoneyToCard(Integer cardId, int amount) {

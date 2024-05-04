@@ -54,11 +54,12 @@ public class CardService {
 	@Autowired
 	private UserAppService userAppService;
 
-	public Card createCard(Card card) {
+	public Card createCard(Card card,String userName,String password) {
 		logger.info("CPA : CS : Saving card details {}", card);
 		Card savedCard = null;
 		try {
 			savedCard = cardRepository.save(card);
+			
 		} catch (Exception e) {
 			logger.error("Exception found at CPA : CS ", e);
 		}
@@ -129,6 +130,24 @@ public class CardService {
 			return deleteCardAPIResponse;
 		}
 	}
+	
+	public  boolean isAdmin(String userName, String password) {
+		logger.info("VALIDATING USERNAME AND PASSWORD userName:{},psssword:{}", userName, password);
+		User user = userAppService.userLoginService(userName, password);
+		if (user != null) {
+			logger.info("Login validation successful");
+			String role = user.getRole();
+			if (role.equalsIgnoreCase("ADMIN")) {
+			return  true;
+		}
+			else {
+				return false;
+			}
+		}
+		return false;
+	}
+			
+	
 
 	public String addMoneyToCard(Integer cardId, int amount) {
 		Card card = null;

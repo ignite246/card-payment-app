@@ -53,19 +53,19 @@ public class CardController {
 	private Integer minimumTxnAmount;
 
 	@PostMapping("/create-card")
-	public Map<String, String> createCard(@RequestBody Card card) {
+	public Map<String, String> createCard(@RequestBody Card card,@RequestHeader("userName")String userName,@RequestHeader("password") String password) {
 
 		logger.info("====== createCard :: Input Received ====");
 		logger.info("Card to be created :: {}", card);
 
-		final boolean cardRequestValidation = validation.createCardRequestValidation(card);
+		final boolean cardRequestValidation = validation.createCardRequestValidation(card,userName,password);
 		// cardRequestValidation :: true ==> the data is correct
 		// cardRequestValidation :: false => the data is invalid/incorrect
 
 		Map<String, String> createCardResponse = new HashMap<>(3);
 		if (cardRequestValidation) {
 			// Going to call service layer
-			Card card2 = cardService.createCard(card);
+			Card card2 = cardService.createCard(card, userName, password);
 			// got response from service layer
 			createCardResponse.put(CardPaymentConstants.STATUS, CardPaymentConstants.SUCCESS);
 			createCardResponse.put("cardId", String.valueOf(card2.getCardId()));

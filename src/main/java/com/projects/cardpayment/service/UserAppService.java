@@ -30,7 +30,6 @@ public class UserAppService {
 	}
 
 	public User userLoginService(String userName, String password) {
-		User byUserNameAndPassword = userAppRepo.findByUserNameAndPassword(userName, password);
-		return byUserNameAndPassword;
+		return userAppRepo.findByUserNameAndPassword(userName, password);
 	}
-}
+} 

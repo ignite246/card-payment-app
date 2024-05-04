@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.projects.cardpayment.constant.CardPaymentConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,11 +17,13 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.itextpdf.text.DocumentException;
+import com.projects.cardpayment.constant.CardPaymentConstants;
 import com.projects.cardpayment.entities.Card;
 import com.projects.cardpayment.entities.TxnDetails;
 import com.projects.cardpayment.repository.TxnRepository;
@@ -108,29 +109,15 @@ public class CardController {
 	}
 
 	@DeleteMapping("/delete-a-card-by-id/{cardId}")
-	public Map<String, String> deleteACardById(@PathVariable("cardId") Integer cardId) {
+	public Map<String, String> deleteACardById(@PathVariable("cardId") Integer cardId,
+			@RequestHeader("userName") String userName, @RequestHeader("password") String password) {
 		logger.info("====== deleteACardById :: Input Received ====");
 		logger.info("Card ID ::{} ", cardId);
-		final Map<String, String> deleteCardAPIResponse = new HashMap<>(4);
-		try {
-			cardService.deleteById(cardId);
-			logger.info("card with id {} deleted successfully", cardId);
-			deleteCardAPIResponse.put(CardPaymentConstants.STATUS, CardPaymentConstants.SUCCESS);
-			deleteCardAPIResponse.put(CardPaymentConstants.STATUS_CODE, CardPaymentConstants.SUCCESS_STATUS_200);
-			deleteCardAPIResponse.put(CardPaymentConstants.STATUS_MSG, "Card deleted successfully");
-			deleteCardAPIResponse.put("cardId", String.valueOf(cardId));
-		} catch (Exception ex) {
-			logger.error("Exception occurred while deleting the card of the id :: {} ", cardId);
-			logger.error("Exception reason ::{} ", ex.getMessage());
-			deleteCardAPIResponse.put(CardPaymentConstants.STATUS, CardPaymentConstants.FAILURE);
-			deleteCardAPIResponse.put(CardPaymentConstants.STATUS_CODE, CardPaymentConstants.FAILURE_STATUS_500);
-			deleteCardAPIResponse.put(CardPaymentConstants.STATUS_MSG, "Card could not be deleted");
-			deleteCardAPIResponse.put("cardId", String.valueOf(cardId));
-			deleteCardAPIResponse.put(CardPaymentConstants.REASON, "Card ID does not exist");
-		}
-		logger.info("deleteACardById API Response :: {} ", deleteCardAPIResponse);
-		return deleteCardAPIResponse;
+
+		Map<String, String> deleteById = cardService.deleteById(cardId, userName, password);
+		return deleteById;
 	}
+
 	@PatchMapping("/add-money-to-card")
 	public Map<String, String> addMoneyToCard(@RequestParam("cardId") Integer cardId,
 			@RequestParam("amount") Integer amount) {

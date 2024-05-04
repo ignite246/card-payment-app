@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 import com.projects.cardpayment.constant.CardPaymentConstants;
@@ -30,6 +31,7 @@ import com.itextpdf.text.Paragraph;
 import com.itextpdf.text.pdf.PdfWriter;
 import com.projects.cardpayment.entities.Card;
 import com.projects.cardpayment.entities.TxnDetails;
+import com.projects.cardpayment.entities.User;
 import com.projects.cardpayment.repository.CardRepository;
 import com.projects.cardpayment.repository.TxnRepository;
 import com.projects.cardpayment.utils.mailservice.MailService;
@@ -48,6 +50,9 @@ public class CardService {
 
 	@Autowired
 	private MailService mailService;
+
+	@Autowired
+	private UserAppService userAppService;
 
 	public Card createCard(Card card) {
 		logger.info("CPA : CS : Saving card details {}", card);
@@ -73,8 +78,56 @@ public class CardService {
 		return card;
 	}
 
-	public void deleteById(Integer cardId) {
-		cardRepository.deleteById(cardId);
+	public Map<String, String> deleteById(Integer cardId, String userName, String password) {
+		logger.info("VALIDATING USERNAME AND PASSWORD userName:{},psssword:{}", userName, password);
+		final Map<String, String> deleteCardAPIResponse = new HashMap<>();
+		User user = userAppService.userLoginService(userName, password);
+		if (user != null) {
+			logger.info("Login validation successful");
+			String role = user.getRole();
+			if (role.equalsIgnoreCase("ADMIN")) {
+				Optional<Card> cardid = cardRepository.findById(cardId);
+				if (cardid.isPresent()) {
+					logger.info("Admin validation successfull");
+					cardRepository.deleteById(cardId);
+
+					deleteCardAPIResponse.put(CardPaymentConstants.STATUS, CardPaymentConstants.SUCCESS);
+					deleteCardAPIResponse.put(CardPaymentConstants.STATUS_CODE,
+							CardPaymentConstants.SUCCESS_STATUS_200);
+					deleteCardAPIResponse.put(CardPaymentConstants.STATUS_MSG, "Card deleted successfully");
+					deleteCardAPIResponse.put("cardId", String.valueOf(cardId));
+					logger.info("1 card deleted");
+					return deleteCardAPIResponse;
+				} else {
+					logger.info("card not found");
+					deleteCardAPIResponse.put(CardPaymentConstants.STATUS, CardPaymentConstants.FAILURE);
+					deleteCardAPIResponse.put(CardPaymentConstants.STATUS_CODE,
+							CardPaymentConstants.FAILURE_STATUS_500);
+					deleteCardAPIResponse.put(CardPaymentConstants.STATUS_MSG, "Card not found");
+					deleteCardAPIResponse.put("cardId", String.valueOf(cardId));
+					deleteCardAPIResponse.put(CardPaymentConstants.REASON, "Invalid card Id!!");
+					logger.info("card not found");
+					return deleteCardAPIResponse;
+				}
+			} else {
+				logger.info("Admin validation failed");
+				deleteCardAPIResponse.put(CardPaymentConstants.STATUS, CardPaymentConstants.FAILURE);
+				deleteCardAPIResponse.put(CardPaymentConstants.STATUS_CODE, "401");
+				deleteCardAPIResponse.put(CardPaymentConstants.STATUS_MSG, "Authorization failed");
+				deleteCardAPIResponse.put("cardId", String.valueOf(cardId));
+				deleteCardAPIResponse.put(CardPaymentConstants.REASON, "user doesn't have admin role");
+				return deleteCardAPIResponse;
+			}
+		} else {
+			logger.info("username or password incorrect");
+			deleteCardAPIResponse.put(CardPaymentConstants.STATUS, CardPaymentConstants.FAILURE);
+			deleteCardAPIResponse.put(CardPaymentConstants.STATUS_CODE, CardPaymentConstants.FAILURE_STATUS_500);
+			deleteCardAPIResponse.put(CardPaymentConstants.STATUS_MSG, "Authentication failed!!");
+			deleteCardAPIResponse.put("cardId", String.valueOf(cardId));
+			deleteCardAPIResponse.put(CardPaymentConstants.REASON, "username or password is incorrect");
+			logger.info("user doesn't exist");
+			return deleteCardAPIResponse;
+		}
 	}
 
 	public String addMoneyToCard(Integer cardId, int amount) {
@@ -174,12 +227,9 @@ public class CardService {
 
 					MailStructure mailStructure = new MailStructure();
 					mailStructure.setSubject("Order Payment from Card");
-					mailStructure.setMessage(
-							"Dear "+card.getCardHolderFirstName()+",\n"
-							+  amountToBePaid +" has been deducted(order payment) from your card successfully.\n"
-									+ "Txn ID : " + txnUUID +"\n\n"
-									+ "Thanks & Regards, \n"
-									+ "CardPaymentApp");
+					mailStructure.setMessage("Dear " + card.getCardHolderFirstName() + ",\n" + amountToBePaid
+							+ " has been deducted(order payment) from your card successfully.\n" + "Txn ID : " + txnUUID
+							+ "\n\n" + "Thanks & Regards, \n" + "CardPaymentApp");
 
 					mailService.sendEmail(mailStructure, card.getEmail());
 					logger.info("Mail has been sent to {} successfully.", card.getEmail());

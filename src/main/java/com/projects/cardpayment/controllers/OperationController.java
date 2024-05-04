@@ -78,8 +78,5 @@ public class OperationController {
 			return userLoginResponseDTO;
 		}
 	}
-	@GetMapping("/user")
-	public String user(@RequestHeader("userName") String userName) {
-		return userName;
-	}
+	
 }

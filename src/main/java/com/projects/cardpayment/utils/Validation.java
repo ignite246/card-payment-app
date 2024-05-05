@@ -64,10 +64,7 @@ public class Validation {
 			logger.info("Card ExpiryDate pattern is not matching :: VALIDATION FAILED");
 			validationPassed = false;
 		}
-			if(!cardService.isAdmin(userName,password)) {
-				logger.info("User is not admin :: VALIDATION FAILED");
-				validationPassed= false;
-			}
+			
 			return validationPassed;
 		
 	}

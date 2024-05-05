@@ -63,19 +63,29 @@ public class CardController {
 		// cardRequestValidation :: false => the data is invalid/incorrect
 
 		Map<String, String> createCardResponse = new HashMap<>(3);
+		boolean admin = cardService.isAdmin(userName,password); 
+		if(admin) {
 		if (cardRequestValidation) {
 			// Going to call service layer
-			Card card2 = cardService.createCard(card, userName, password);
+			 return cardService.createCard(card, userName, password);
 			// got response from service layer
-			createCardResponse.put(CardPaymentConstants.STATUS, CardPaymentConstants.SUCCESS);
-			createCardResponse.put("cardId", String.valueOf(card2.getCardId()));
-			createCardResponse.put("message", "Card created successfully");
+//			createCardResponse.put(CardPaymentConstants.STATUS, CardPaymentConstants.SUCCESS);
+//			createCardResponse.put("cardId", String.valueOf(card.getCardId()));
+//			createCardResponse.put("message", "Card created successfully");
 		} else {
 			createCardResponse.put(CardPaymentConstants.STATUS, CardPaymentConstants.FAILURE);
 			createCardResponse.put("message", "Card creation failed");
 			createCardResponse.put("reason", "Invalid card creation request body");
 		}
 		return createCardResponse;
+	}else {
+		
+		createCardResponse.put(CardPaymentConstants.STATUS, CardPaymentConstants.FAILURE);
+		createCardResponse.put("message", "Card creation failed");
+		createCardResponse.put("reason", "user is non Admin");
+		return createCardResponse;
+	}
+		
 	}
 
 	@GetMapping("/get-all-cards")
@@ -121,7 +131,6 @@ public class CardController {
 	@PatchMapping("/add-money-to-card")
 	public Map<String, String> addMoneyToCard(@RequestParam("cardId") Integer cardId,
 			@RequestParam("amount") Integer amount) {
-		Card card = null;
 		logger.info("===== addMoneyToCard :: Input Received ====");
 		logger.info("Card ID :: {}", cardId);
 		logger.info("Amount to be added :: {}", amount);

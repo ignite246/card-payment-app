@@ -26,12 +26,14 @@ import com.itextpdf.text.DocumentException;
 import com.projects.cardpayment.constant.CardPaymentConstants;
 import com.projects.cardpayment.entities.Card;
 import com.projects.cardpayment.entities.TxnDetails;
+import com.projects.cardpayment.entities.User;
 import com.projects.cardpayment.repository.TxnRepository;
 import com.projects.cardpayment.response.dto.CVVNumApiResponseDTO;
 import com.projects.cardpayment.response.dto.CardsByBankResDTO;
 import com.projects.cardpayment.response.dto.FindACardByIdResponseDTO;
 import com.projects.cardpayment.response.dto.GetCardBalanceInBetweenResDTO;
 import com.projects.cardpayment.service.CardService;
+import com.projects.cardpayment.service.UserAppService;
 import com.projects.cardpayment.utils.Validation;
 
 @RestController
@@ -49,6 +51,10 @@ public class CardController {
 	@Autowired
 	private TxnRepository txnRepo;
 
+	
+	@Autowired
+	private UserAppService userAppService;
+
 	@Value("${cardapp.c2cmoneytransfer.minimumTxnAmount}")
 	private Integer minimumTxnAmount;
 
@@ -63,6 +69,9 @@ public class CardController {
 		// cardRequestValidation :: false => the data is invalid/incorrect
 
 		Map<String, String> createCardResponse = new HashMap<>(3);
+		if((userName!=null)&&(password!=null)) {
+		User user = userAppService.userLoginService(userName, password);
+		if(user!=null) {
 		boolean admin = cardService.isAdmin(userName,password); 
 		if(admin) {
 		if (cardRequestValidation) {
@@ -84,7 +93,22 @@ public class CardController {
 		createCardResponse.put("message", "Card creation failed");
 		createCardResponse.put("reason", "user is non Admin");
 		return createCardResponse;
-	}
+	
+		}}
+		
+		else {
+			createCardResponse.put(CardPaymentConstants.STATUS, CardPaymentConstants.FAILURE);
+			createCardResponse.put("message", "Card creation failed");
+			createCardResponse.put("reason", "username or password is incorrect");
+			return createCardResponse;
+		}}
+		else {
+			createCardResponse.put(CardPaymentConstants.STATUS, CardPaymentConstants.FAILURE);
+			createCardResponse.put("message", "Card creation failed");
+			createCardResponse.put("reason", "username or password is invalid");
+			return createCardResponse;
+			
+		}
 		
 	}
 

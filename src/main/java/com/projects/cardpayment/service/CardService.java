@@ -54,15 +54,29 @@ public class CardService {
 	@Autowired
 	private UserAppService userAppService;
 
-	public Card createCard(Card card) {
+	public Map<String, String> createCard(Card card,String userName,String password) {
 		logger.info("CPA : CS : Saving card details {}", card);
+		final Map<String, String> createCardResponse = new HashMap<>();
 		Card savedCard = null;
 		try {
+				logger.info("User is admin");
 			savedCard = cardRepository.save(card);
-		} catch (Exception e) {
-			logger.error("Exception found at CPA : CS ", e);
+			logger.info("CARD CREATED :{}",savedCard);
+		//	createCardAPIResponse.put("saveCard",savedCard);	
+			createCardResponse.put(CardPaymentConstants.STATUS, CardPaymentConstants.SUCCESS);
+			createCardResponse.put("cardId", String.valueOf(card.getCardId()));
+			createCardResponse.put("message", "Card created successfully");
+		
+			}
+			 catch (Exception e) {
+			logger.error("Exception found at CPA : CS {}", e.getMessage());
+			createCardResponse.put(CardPaymentConstants.FAILURE, CardPaymentConstants.FAILURE);
+			createCardResponse.put("reason", e.getMessage() );
+			createCardResponse.put("message", "Card creation Failed");
+		
 		}
-		return savedCard;
+		return createCardResponse;
+		
 	}
 
 	public List<Card> getAllCards() {
@@ -78,7 +92,7 @@ public class CardService {
 		return card;
 	}
 
-	public Map<String, String> deleteById(Integer cardId, String userName, String password) {
+	public  Map<String, String> deleteById(Integer cardId, String userName, String password) {
 		logger.info("VALIDATING USERNAME AND PASSWORD userName:{},psssword:{}", userName, password);
 		final Map<String, String> deleteCardAPIResponse = new HashMap<>();
 		User user = userAppService.userLoginService(userName, password);
@@ -129,6 +143,24 @@ public class CardService {
 			return deleteCardAPIResponse;
 		}
 	}
+	
+	public  boolean isAdmin(String userName, String password) {
+		logger.info("VALIDATING USERNAME AND PASSWORD userName:{},psssword:{}", userName, password);
+		User user = userAppService.userLoginService(userName, password);
+		if (user != null) {
+			logger.info("Login validation successful");
+			String role = user.getRole();
+			if (role.equalsIgnoreCase("ADMIN")) {
+			return  true;
+		}
+			else {
+				return false;
+			}
+		}
+		return false;
+	}
+			
+	
 
 	public String addMoneyToCard(Integer cardId, int amount) {
 		Card card = null;

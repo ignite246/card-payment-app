@@ -26,12 +26,14 @@ import com.itextpdf.text.DocumentException;
 import com.projects.cardpayment.constant.CardPaymentConstants;
 import com.projects.cardpayment.entities.Card;
 import com.projects.cardpayment.entities.TxnDetails;
+import com.projects.cardpayment.entities.User;
 import com.projects.cardpayment.repository.TxnRepository;
 import com.projects.cardpayment.response.dto.CVVNumApiResponseDTO;
 import com.projects.cardpayment.response.dto.CardsByBankResDTO;
 import com.projects.cardpayment.response.dto.FindACardByIdResponseDTO;
 import com.projects.cardpayment.response.dto.GetCardBalanceInBetweenResDTO;
 import com.projects.cardpayment.service.CardService;
+import com.projects.cardpayment.service.UserAppService;
 import com.projects.cardpayment.utils.Validation;
 
 @RestController
@@ -49,33 +51,65 @@ public class CardController {
 	@Autowired
 	private TxnRepository txnRepo;
 
+	
+	@Autowired
+	private UserAppService userAppService;
+
 	@Value("${cardapp.c2cmoneytransfer.minimumTxnAmount}")
 	private Integer minimumTxnAmount;
 
 	@PostMapping("/create-card")
-	public Map<String, String> createCard(@RequestBody Card card) {
+	public Map<String, String> createCard(@RequestBody Card card,@RequestHeader("userName")String userName,@RequestHeader("password") String password) {
 
 		logger.info("====== createCard :: Input Received ====");
 		logger.info("Card to be created :: {}", card);
 
-		final boolean cardRequestValidation = validation.createCardRequestValidation(card);
+		final boolean cardRequestValidation = validation.createCardRequestValidation(card,userName,password);
 		// cardRequestValidation :: true ==> the data is correct
 		// cardRequestValidation :: false => the data is invalid/incorrect
 
 		Map<String, String> createCardResponse = new HashMap<>(3);
+		if((userName!=null)&&(password!=null)) {
+		User user = userAppService.userLoginService(userName, password);
+		if(user!=null) {
+		boolean admin = cardService.isAdmin(userName,password); 
+		if(admin) {
 		if (cardRequestValidation) {
 			// Going to call service layer
-			Card card2 = cardService.createCard(card);
+			 return cardService.createCard(card, userName, password);
 			// got response from service layer
-			createCardResponse.put(CardPaymentConstants.STATUS, CardPaymentConstants.SUCCESS);
-			createCardResponse.put("cardId", String.valueOf(card2.getCardId()));
-			createCardResponse.put("message", "Card created successfully");
+//			createCardResponse.put(CardPaymentConstants.STATUS, CardPaymentConstants.SUCCESS);
+//			createCardResponse.put("cardId", String.valueOf(card.getCardId()));
+//			createCardResponse.put("message", "Card created successfully");
 		} else {
 			createCardResponse.put(CardPaymentConstants.STATUS, CardPaymentConstants.FAILURE);
 			createCardResponse.put("message", "Card creation failed");
 			createCardResponse.put("reason", "Invalid card creation request body");
 		}
 		return createCardResponse;
+	}else {
+		
+		createCardResponse.put(CardPaymentConstants.STATUS, CardPaymentConstants.FAILURE);
+		createCardResponse.put("message", "Card creation failed");
+		createCardResponse.put("reason", "user is non Admin");
+		return createCardResponse;
+	
+		}}
+		
+		else {
+			createCardResponse.put(CardPaymentConstants.STATUS, CardPaymentConstants.FAILURE);
+			createCardResponse.put("message", "Card creation failed");
+			createCardResponse.put("reason", "username or password is incorrect");
+			return createCardResponse;
+		}}
+		else {
+			createCardResponse.put(CardPaymentConstants.STATUS, CardPaymentConstants.FAILURE);
+			createCardResponse.put("message", "Card creation failed");
+			createCardResponse.put("reason", "username or password is invalid");
+			return createCardResponse;
+			
+		}
+		
 	}
 
 	@GetMapping("/get-all-cards")
@@ -121,7 +155,6 @@ public class CardController {
 	@PatchMapping("/add-money-to-card")
 	public Map<String, String> addMoneyToCard(@RequestParam("cardId") Integer cardId,
 			@RequestParam("amount") Integer amount) {
-		Card card = null;
 		logger.info("===== addMoneyToCard :: Input Received ====");
 		logger.info("Card ID :: {}", cardId);
 		logger.info("Amount to be added :: {}", amount);

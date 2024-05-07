@@ -6,18 +6,23 @@ import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.projects.cardpayment.constant.CardPaymentConstants;
 import com.projects.cardpayment.entities.Card;
 import com.projects.cardpayment.entities.User;
+import com.projects.cardpayment.service.CardService;
 
 @Component
 public class Validation {
+	
+	@Autowired
+	private CardService cardService;
 
 	Logger logger = LoggerFactory.getLogger(Validation.class);
 
-	public boolean createCardRequestValidation(Card card) {
+	public boolean createCardRequestValidation(Card card,String userName ,String password) {
 		boolean validationPassed = true;
 		if (!isFirstnameLastnameBanknamePatternValid(card.getCardHolderFirstName())) {
 			logger.info("Card Holder FirstName Validation Result :: FAILED");
@@ -59,7 +64,9 @@ public class Validation {
 			logger.info("Card ExpiryDate pattern is not matching :: VALIDATION FAILED");
 			validationPassed = false;
 		}
-		return validationPassed;
+			
+			return validationPassed;
+		
 	}
 
 	/**
@@ -110,6 +117,7 @@ public class Validation {
 		Matcher matcher = pattern.matcher(password);
 		return matcher.matches();
 	}
+	
 
 	/*
 	 * String regex = "[A-z]{3,20}"; Pattern pattern = Pattern.compile(regex);
